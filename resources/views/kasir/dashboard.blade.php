@@ -19,9 +19,20 @@
                     <h1 class="mt-1 text-xl font-semibold text-white sm:text-2xl">Kasir Sample</h1>
                     <p class="mt-1 text-sm leading-5 text-slate-400">Budi Pratama • 01:24:08 sejak login</p>
                 </div>
-                <span class="flex shrink-0 items-center justify-center rounded-full border border-white/10 bg-slate-950/35 px-4 py-2 text-sm font-semibold leading-5 text-slate-300">
-                    Coming Soon
-                </span>
+                <div class="flex shrink-0 flex-col items-end gap-3">
+                    <span class="flex items-center justify-center rounded-full border border-white/10 bg-slate-950/35 px-4 py-2 text-sm font-semibold leading-5 text-slate-300">
+                        Coming Soon
+                    </span>
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button
+                            type="submit"
+                            class="inline-flex items-center justify-center rounded-full bg-rose-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-rose-400"
+                        >
+                            Logout
+                        </button>
+                    </form>
+                </div>
             </div>
 
             <p class="mt-4 max-w-xl text-sm leading-6 text-slate-400">
