@@ -2,15 +2,13 @@
 
 namespace App\Domains\Product\Models;
 
-use App\Account\Account\Models\User as ModelsUser;
 use App\Domains\Account\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class StockHistory extends Model
 {
-    // Kita menonaktifkan updated_at karena tabel ini hanya bersifat log/insert-only
-    const UPDATED_AT = null; 
+    const UPDATED_AT = null;
 
     protected $fillable = [
         'product_id',
@@ -27,6 +25,6 @@ class StockHistory extends Model
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(ModelsUser::class, 'user_id');
+        return $this->belongsTo(User::class, 'user_id');
     }
 }

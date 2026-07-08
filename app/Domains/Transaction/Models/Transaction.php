@@ -2,7 +2,6 @@
 
 namespace App\Domains\Transaction\Models;
 
-use App\Account\Account\Models\User as ModelsUser;
 use App\Domains\Account\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,8 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Transaction extends Model
 {
-    // Karena di migration kita pakai created_at bawaan PostgreSQL, kita matikan updated_at
-    const UPDATED_AT = null; 
+    const UPDATED_AT = null;
 
     protected $fillable = [
         'invoice_number',
@@ -36,12 +34,9 @@ class Transaction extends Model
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(ModelsUser::class, 'user_id');
+        return $this->belongsTo(User::class, 'user_id');
     }
 
-    /**
-     * Relasi: Satu struk transaksi memiliki banyak item barang yang dibeli.
-     */
     public function details(): HasMany
     {
         return $this->hasMany(TransactionDetail::class, 'transaction_id');
