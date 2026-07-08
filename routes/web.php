@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AdminDashboardController;
+use App\Http\Controllers\AdminProductController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\KasirDashboardController;
 use Illuminate\Support\Facades\Route;
@@ -21,5 +22,6 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
+        Route::post('/products', [AdminProductController::class, 'store'])->name('products.store');
     });
 });

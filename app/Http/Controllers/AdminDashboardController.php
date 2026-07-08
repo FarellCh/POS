@@ -18,6 +18,10 @@ class AdminDashboardController extends Controller
             'transaksi_total' => Transaction::count(),
         ];
 
+        $categories = Category::query()
+            ->orderBy('name')
+            ->get();
+
         $lowStockProducts = Product::query()
             ->with('category')
             ->where('is_active', true)
@@ -39,6 +43,7 @@ class AdminDashboardController extends Controller
 
         return view('admin.dashboard', [
             'statistics' => $statistics,
+            'categories' => $categories,
             'lowStockProducts' => $lowStockProducts,
             'recentProducts' => $recentProducts,
             'recentTransactions' => $recentTransactions,
