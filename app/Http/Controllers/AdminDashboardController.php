@@ -18,6 +18,19 @@ class AdminDashboardController extends Controller
             'transaksi_total' => Transaction::count(),
         ];
 
+        $lowStockProducts = Product::query()
+            ->with('category')
+            ->where('is_active', true)
+            ->orderBy('stock')
+            ->limit(5)
+            ->get();
+
+        $recentProducts = Product::query()
+            ->with('category')
+            ->latest('id')
+            ->limit(5)
+            ->get();
+
         $recentTransactions = Transaction::query()
             ->with(['user', 'details.product'])
             ->latest('created_at')
@@ -26,6 +39,8 @@ class AdminDashboardController extends Controller
 
         return view('admin.dashboard', [
             'statistics' => $statistics,
+            'lowStockProducts' => $lowStockProducts,
+            'recentProducts' => $recentProducts,
             'recentTransactions' => $recentTransactions,
         ]);
     }

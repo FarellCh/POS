@@ -38,6 +38,7 @@ class KasirDashboardController extends Controller
             ->get()
             ->map(function (Product $product) {
                 return [
+                    
                     'id' => $product->id,
                     'sku' => $product->sku,
                     'name' => $product->name,
