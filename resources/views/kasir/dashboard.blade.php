@@ -75,6 +75,7 @@
                 @forelse ($products as $product)
                     <button
                         type="button"
+                        data-product-id="{{ $product['id'] }}"
                         class="product-card group rounded-2xl border border-white/10 bg-slate-950/25 p-4 text-left transition hover:-translate-y-0.5 hover:border-cyan-400/50 hover:bg-slate-950/45"
                         data-product='@json($product)'
                     >
@@ -89,7 +90,7 @@
                         <div class="mt-4 flex items-end justify-between">
                             <div>
                                 <p class="text-xs text-slate-400">Stok</p>
-                                <p class="text-lg font-semibold text-white">{{ $product['stock'] }}</p>
+                                <p class="text-lg font-semibold text-white" data-stock-display="{{ $product['id'] }}">{{ $product['stock'] }}</p>
                             </div>
                             <p class="text-right text-sm font-medium text-emerald-300">{{ $currency($product['price']) }}</p>
                         </div>
@@ -120,6 +121,9 @@
                 <div class="mt-3 min-w-0 overflow-hidden rounded-2xl border border-white/10 bg-slate-950/45 px-4 py-3 text-right">
                     <p id="quantity-display" class="truncate font-mono text-2xl font-semibold tabular-nums text-white">1</p>
                 </div>
+                <p id="stock-warning" class="mt-2 hidden text-sm text-rose-300">
+                    Qty melebihi stok tersedia.
+                </p>
 
                 <div class="mt-4 grid grid-cols-4 gap-2">
                     <button type="button" class="calc-key rounded-2xl bg-white/5 py-4 text-lg font-semibold text-white hover:bg-white/10" data-key="7">7</button>
@@ -139,12 +143,62 @@
 
                     <button type="button" class="calc-key col-span-2 rounded-2xl bg-white/5 py-4 text-lg font-semibold text-white hover:bg-white/10" data-key="0">0</button>
                     <button type="button" class="calc-key rounded-2xl bg-white/5 py-4 text-lg font-semibold text-white hover:bg-white/10" data-key="00">00</button>
+                    <button
+                        type="button"
+                        id="confirm-order"
+                        class="rounded-2xl bg-emerald-500 py-4 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
+                        disabled
+                    >
+                        Confirm
+                    </button>
                 </div>
 
                 <div class="mt-4 rounded-2xl border border-white/10 bg-slate-950/35 p-4">
                     <div class="flex items-center justify-between text-sm">
                         <span class="text-slate-400">Subtotal</span>
                         <span id="subtotal-display" class="font-semibold text-white">Rp 0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="receipt-panel" class="mt-5 hidden rounded-3xl border border-white/10 bg-slate-950/30 p-4">
+                <div class="flex items-center justify-between gap-3">
+                    <div>
+                        <p class="text-xs uppercase tracking-[0.25em] text-cyan-300">Struk</p>
+                        <h3 class="text-lg font-semibold text-white">Preview transaksi</h3>
+                    </div>
+                    <button
+                        type="button"
+                        id="print-receipt"
+                        class="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-slate-200 transition hover:bg-white/10"
+                    >
+                        Print
+                    </button>
+                </div>
+
+                <div class="mt-4 rounded-2xl border border-white/10 bg-slate-950/45 p-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs uppercase tracking-[0.25em] text-slate-400">Invoice</p>
+                            <p id="receipt-invoice" class="mt-1 font-semibold text-white">-</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-xs uppercase tracking-[0.25em] text-slate-400">Kasir</p>
+                            <p class="mt-1 font-semibold text-white">Budi Pratama</p>
+                        </div>
+                    </div>
+
+                    <div id="receipt-items" class="mt-4 space-y-3"></div>
+
+                    <div class="mt-4 border-t border-white/10 pt-4 space-y-2 text-sm">
+                        <div class="flex items-center justify-between text-slate-300">
+                            <span>Total Item</span>
+                            <span id="receipt-total-item" class="font-semibold text-white">0</span>
+                        </div>
+                        <div class="flex items-center justify-between text-slate-300">
+                            <span>Grand Total</span>
+                            <span id="receipt-grand-total" class="font-semibold text-emerald-300">Rp 0</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -160,10 +214,21 @@
     const state = {
         selectedProduct: null,
         quantityInput: '',
+        cart: [],
+        invoiceNumber: `INV-${new Date().toISOString().slice(0, 10).replaceAll('-', '')}-${Math.floor(Math.random() * 9000 + 1000)}`,
     };
 
     const quantityDisplay = document.getElementById('quantity-display');
     const subtotalDisplay = document.getElementById('subtotal-display');
+    const stockWarning = document.getElementById('stock-warning');
+    const confirmOrderButton = document.getElementById('confirm-order');
+    const receiptPanel = document.getElementById('receipt-panel');
+    const receiptInvoice = document.getElementById('receipt-invoice');
+    const receiptItems = document.getElementById('receipt-items');
+    const receiptTotalItem = document.getElementById('receipt-total-item');
+    const receiptGrandTotal = document.getElementById('receipt-grand-total');
+    const printReceiptButton = document.getElementById('print-receipt');
+    const csrfToken = @json(csrf_token());
 
     const normalizeQuantityInput = (value) => value.replace(/\D/g, '').replace(/^0+/, '');
 
@@ -172,12 +237,147 @@
         return Number.isNaN(parsedQuantity) || parsedQuantity < 1 ? 1 : parsedQuantity;
     };
 
+    const getCartTotals = () => {
+        const totalItem = state.cart.reduce((sum, item) => sum + item.quantity, 0);
+        const grandTotal = state.cart.reduce((sum, item) => sum + item.quantity * item.price, 0);
+
+        return { totalItem, grandTotal };
+    };
+
+    const buildReceiptHtml = () => {
+        const { totalItem, grandTotal } = getCartTotals();
+
+        return `
+            <!DOCTYPE html>
+            <html lang="id">
+            <head>
+                <meta charset="utf-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1">
+                <title>${state.invoiceNumber}</title>
+                <style>
+                    body {
+                        margin: 0;
+                        padding: 24px;
+                        font-family: Arial, sans-serif;
+                        background: #fff;
+                        color: #111827;
+                    }
+                    .receipt {
+                        width: 320px;
+                        margin: 0 auto;
+                        font-size: 12px;
+                        line-height: 1.5;
+                    }
+                    .title {
+                        text-align: center;
+                        margin-bottom: 16px;
+                    }
+                    .title h1 {
+                        margin: 0;
+                        font-size: 18px;
+                    }
+                    .muted {
+                        color: #6b7280;
+                    }
+                    .divider {
+                        border-top: 1px dashed #d1d5db;
+                        margin: 12px 0;
+                    }
+                    .row {
+                        display: flex;
+                        justify-content: space-between;
+                        gap: 12px;
+                    }
+                    .items {
+                        margin-top: 8px;
+                    }
+                    .item {
+                        margin-bottom: 10px;
+                    }
+                    .item strong {
+                        display: block;
+                        margin-bottom: 2px;
+                    }
+                    .total {
+                        font-size: 13px;
+                        font-weight: 700;
+                    }
+                    @media print {
+                        body { padding: 0; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="receipt">
+                    <div class="title">
+                        <h1>KyoraPOS</h1>
+                        <div class="muted">Struk Penjualan</div>
+                    </div>
+                    <div class="row"><span>Invoice</span><span>${state.invoiceNumber}</span></div>
+                    <div class="row"><span>Kasir</span><span>Budi Pratama</span></div>
+                    <div class="row"><span>Tanggal</span><span>${new Date().toLocaleString('id-ID')}</span></div>
+                    <div class="divider"></div>
+                    <div class="items">
+                        ${state.cart.map((item) => `
+                            <div class="item">
+                                <strong>${item.name}</strong>
+                                <div class="row muted">
+                                    <span>${item.quantity} x ${formatCurrency(item.price)}</span>
+                                    <span>${formatCurrency(item.quantity * item.price)}</span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="divider"></div>
+                    <div class="row total"><span>Total Item</span><span>${totalItem}</span></div>
+                    <div class="row total"><span>Grand Total</span><span>Rp ${formatCurrency(grandTotal)}</span></div>
+                </div>
+            </body>
+            </html>
+        `;
+    };
+
+    const updateReceiptPanel = () => {
+        const { totalItem, grandTotal } = getCartTotals();
+
+        if (!state.cart.length) {
+            receiptPanel.classList.add('hidden');
+            return;
+        }
+
+        receiptPanel.classList.remove('hidden');
+        receiptInvoice.textContent = state.invoiceNumber;
+        receiptTotalItem.textContent = String(totalItem);
+        receiptGrandTotal.textContent = `Rp ${formatCurrency(grandTotal)}`;
+
+        receiptItems.innerHTML = state.cart.map((item) => `
+            <div class="rounded-2xl border border-white/10 bg-slate-950/35 p-3">
+                <div class="flex items-start justify-between gap-3">
+                    <div>
+                        <p class="text-sm font-semibold text-white">${item.name}</p>
+                        <p class="mt-1 text-xs text-slate-400">${item.sku}</p>
+                    </div>
+                    <button type="button" class="text-xs text-rose-300 hover:text-rose-200" data-remove="${item.id}">Hapus</button>
+                </div>
+                <div class="mt-3 flex items-center justify-between text-sm text-slate-300">
+                    <span>${item.quantity} x Rp ${formatCurrency(item.price)}</span>
+                    <span class="font-semibold text-emerald-300">Rp ${formatCurrency(item.quantity * item.price)}</span>
+                </div>
+            </div>
+        `).join('');
+    };
+
     const render = () => {
         const quantity = getQuantity();
         quantityDisplay.textContent = state.quantityInput || '1';
         subtotalDisplay.textContent = state.selectedProduct
             ? `Rp ${formatCurrency(state.selectedProduct.price * quantity)}`
             : 'Rp 0';
+
+        const stockExceeded = state.selectedProduct ? quantity > state.selectedProduct.stock : false;
+        stockWarning.classList.toggle('hidden', !stockExceeded);
+        confirmOrderButton.disabled = !state.selectedProduct || stockExceeded || state.selectedProduct.stock < 1;
+        updateReceiptPanel();
     };
 
     document.querySelectorAll('.product-card').forEach((button) => {
@@ -223,10 +423,109 @@
         });
     });
 
+    confirmOrderButton.addEventListener('click', () => {
+        if (!state.selectedProduct) {
+            return;
+        }
+
+        const quantity = getQuantity();
+        if (quantity > state.selectedProduct.stock) {
+            render();
+            return;
+        }
+
+        fetch(@json(route('kasir.confirm-item')), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+            },
+            body: JSON.stringify({
+                product_id: state.selectedProduct.id,
+                quantity,
+            }),
+        })
+            .then(async (response) => {
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || 'Stok tidak mencukupi.');
+                }
+
+                return response.json();
+            })
+            .then((data) => {
+                const existing = state.cart.find((item) => item.id === state.selectedProduct.id);
+
+                if (existing) {
+                    existing.quantity += quantity;
+                } else {
+                    state.cart.push({
+                        ...state.selectedProduct,
+                        quantity,
+                    });
+                }
+
+                const updatedStock = data.remaining_stock;
+                const productCard = document.querySelector(`[data-product-id="${state.selectedProduct.id}"]`);
+                const stockDisplay = document.querySelector(`[data-stock-display="${state.selectedProduct.id}"]`);
+
+                if (productCard) {
+                    const updatedProduct = {
+                        ...state.selectedProduct,
+                        stock: updatedStock,
+                    };
+
+                    productCard.dataset.product = JSON.stringify(updatedProduct);
+                }
+
+                if (stockDisplay) {
+                    stockDisplay.textContent = String(updatedStock);
+                }
+
+                state.selectedProduct = null;
+                state.quantityInput = '';
+                render();
+            })
+            .catch((error) => {
+                alert(error.message);
+            });
+    });
+
     document.getElementById('clear-product').addEventListener('click', () => {
         state.selectedProduct = null;
         state.quantityInput = '';
         render();
+    });
+
+    receiptItems.addEventListener('click', (event) => {
+        const target = event.target.closest('button');
+
+        if (!target || !target.dataset.remove) {
+            return;
+        }
+
+        state.cart = state.cart.filter((item) => String(item.id) !== target.dataset.remove);
+        render();
+    });
+
+    printReceiptButton.addEventListener('click', () => {
+        if (!state.cart.length) {
+            return;
+        }
+
+        const printWindow = window.open('', '_blank', 'width=420,height=720');
+        if (!printWindow) {
+            return;
+        }
+
+        printWindow.document.open();
+        printWindow.document.write(buildReceiptHtml());
+        printWindow.document.close();
+        printWindow.focus();
+        setTimeout(() => {
+            printWindow.print();
+        }, 250);
     });
 
     render();

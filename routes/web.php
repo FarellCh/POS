@@ -1,9 +1,11 @@
 <?php
 
 use App\Http\Controllers\AdminDashboardController;
+use App\Http\Controllers\AdminCategoryController;
 use App\Http\Controllers\AdminProductController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\KasirDashboardController;
+use App\Http\Controllers\KasirOrderController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -18,10 +20,12 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('kasir')->name('kasir.')->group(function () {
         Route::get('/', [KasirDashboardController::class, 'index'])->name('dashboard');
+        Route::post('/confirm-item', [KasirOrderController::class, 'store'])->name('confirm-item');
     });
 
     Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
+        Route::post('/categories', [AdminCategoryController::class, 'store'])->name('categories.store');
         Route::post('/products', [AdminProductController::class, 'store'])->name('products.store');
     });
 });

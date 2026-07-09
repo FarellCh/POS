@@ -132,6 +132,46 @@
             <div class="rounded-3xl border border-white/10 bg-white/8 p-6 shadow-xl backdrop-blur-xl">
                 <div class="flex items-center justify-between">
                     <div>
+                        <h2 class="text-xl font-semibold text-white">Tambah Kategori</h2>
+                        <p class="text-sm text-slate-300">Kategori baru langsung muncul di dropdown barang.</p>
+                    </div>
+                </div>
+
+                @if ($errors->any())
+                    <div class="mt-4 rounded-2xl border border-rose-400/20 bg-rose-400/10 p-4 text-sm text-rose-200">
+                        {{ $errors->first() }}
+                    </div>
+                @endif
+
+                <form method="POST" action="{{ route('admin.categories.store') }}" class="mt-5 space-y-4">
+                    @csrf
+
+                    <div>
+                        <label for="category_name" class="mb-2 block text-sm font-medium text-slate-200">Nama Kategori</label>
+                        <input
+                            id="category_name"
+                            name="name"
+                            type="text"
+                            value="{{ old('name') }}"
+                            maxlength="100"
+                            required
+                            class="w-full rounded-2xl border border-white/10 bg-slate-950/45 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400/50 focus:outline-none"
+                            placeholder="Contoh: Minuman"
+                        >
+                    </div>
+
+                    <button
+                        type="submit"
+                        class="w-full rounded-2xl bg-emerald-500 px-4 py-3 font-semibold text-slate-950 transition hover:bg-emerald-400"
+                    >
+                        Simpan Kategori
+                    </button>
+                </form>
+            </div>
+
+            <div class="rounded-3xl border border-white/10 bg-white/8 p-6 shadow-xl backdrop-blur-xl">
+                <div class="flex items-center justify-between">
+                    <div>
                         <h2 class="text-xl font-semibold text-white">Tambah Barang</h2>
                         <p class="text-sm text-slate-300">Field mengikuti migration `products`.</p>
                     </div>
@@ -276,15 +316,6 @@
                 </div>
             </div>
 
-            <div class="rounded-3xl border border-white/10 bg-gradient-to-br from-slate-950/45 to-slate-950/20 p-6 shadow-xl backdrop-blur-xl">
-                <p class="text-xs uppercase tracking-[0.35em] text-cyan-300">Quick Notes</p>
-                <h3 class="mt-2 text-lg font-semibold text-white">Admin workflow</h3>
-                <div class="mt-4 space-y-3 text-sm text-slate-300">
-                    <div class="rounded-2xl border border-white/10 bg-white/5 p-3">Kelola kategori, produk, dan stok dari sini.</div>
-                    <div class="rounded-2xl border border-white/10 bg-white/5 p-3">Pantau transaksi harian dan item yang perlu restock.</div>
-                    <div class="rounded-2xl border border-white/10 bg-white/5 p-3">Logout cepat tersedia di header atas.</div>
-                </div>
-            </div>
         </aside>
     </section>
 </div>
