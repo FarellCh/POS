@@ -164,40 +164,63 @@
             <div id="receipt-panel" class="mt-5 hidden rounded-3xl border border-white/10 bg-slate-950/30 p-4">
                 <div class="flex items-center justify-between gap-3">
                     <div>
-                        <p class="text-xs uppercase tracking-[0.25em] text-cyan-300">Struk</p>
-                        <h3 class="text-lg font-semibold text-white">Preview transaksi</h3>
+                        <p class="text-xs uppercase tracking-[0.25em] text-cyan-300">Pembayaran</p>
+                        <h3 class="text-lg font-semibold text-white">Pilih metode dulu</h3>
                     </div>
                     <button
                         type="button"
                         id="print-receipt"
-                        class="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-slate-200 transition hover:bg-white/10"
+                        class="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-slate-200 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+                        disabled
                     >
                         Print
                     </button>
                 </div>
 
                 <div class="mt-4 rounded-2xl border border-white/10 bg-slate-950/45 p-4">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-xs uppercase tracking-[0.25em] text-slate-400">Invoice</p>
-                            <p id="receipt-invoice" class="mt-1 font-semibold text-white">-</p>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-xs uppercase tracking-[0.25em] text-slate-400">Kasir</p>
-                            <p class="mt-1 font-semibold text-white">Budi Pratama</p>
-                        </div>
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" class="payment-method rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:bg-white/10" data-payment-method="cash">
+                            Cash
+                        </button>
+                        <button type="button" class="payment-method rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:bg-white/10" data-payment-method="gopay">
+                            Gopay
+                        </button>
+                        <button type="button" class="payment-method rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:bg-white/10" data-payment-method="dana">
+                            Dana
+                        </button>
                     </div>
 
-                    <div id="receipt-items" class="mt-4 space-y-3"></div>
-
-                    <div class="mt-4 border-t border-white/10 pt-4 space-y-2 text-sm">
-                        <div class="flex items-center justify-between text-slate-300">
-                            <span>Total Item</span>
-                            <span id="receipt-total-item" class="font-semibold text-white">0</span>
+                    <div class="mt-4 flex items-center justify-between rounded-2xl border border-cyan-400/15 bg-slate-950/45 px-4 py-3">
+                        <div>
+                            <p class="text-xs uppercase tracking-[0.25em] text-slate-400">Metode aktif</p>
+                            <p id="receipt-payment-method" class="mt-1 font-semibold text-white">-</p>
                         </div>
-                        <div class="flex items-center justify-between text-slate-300">
-                            <span>Grand Total</span>
-                            <span id="receipt-grand-total" class="font-semibold text-emerald-300">Rp 0</span>
+                        <p id="payment-hint" class="text-sm text-slate-400">Pilih metode pembayaran dulu untuk menampilkan struk.</p>
+                    </div>
+
+                    <div id="receipt-body" class="hidden">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-xs uppercase tracking-[0.25em] text-slate-400">Invoice</p>
+                                <p id="receipt-invoice" class="mt-1 font-semibold text-white">-</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xs uppercase tracking-[0.25em] text-slate-400">Kasir</p>
+                                <p class="mt-1 font-semibold text-white">Budi Pratama</p>
+                            </div>
+                        </div>
+
+                        <div id="receipt-items" class="mt-4 space-y-3"></div>
+
+                        <div class="mt-4 border-t border-white/10 pt-4 space-y-2 text-sm">
+                            <div class="flex items-center justify-between text-slate-300">
+                                <span>Total Item</span>
+                                <span id="receipt-total-item" class="font-semibold text-white">0</span>
+                            </div>
+                            <div class="flex items-center justify-between text-slate-300">
+                                <span>Grand Total</span>
+                                <span id="receipt-grand-total" class="font-semibold text-emerald-300">Rp 0</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -215,6 +238,7 @@
         selectedProduct: null,
         quantityInput: '',
         cart: [],
+        paymentMethod: '',
         invoiceNumber: `INV-${new Date().toISOString().slice(0, 10).replaceAll('-', '')}-${Math.floor(Math.random() * 9000 + 1000)}`,
     };
 
@@ -223,12 +247,21 @@
     const stockWarning = document.getElementById('stock-warning');
     const confirmOrderButton = document.getElementById('confirm-order');
     const receiptPanel = document.getElementById('receipt-panel');
+    const receiptPaymentMethod = document.getElementById('receipt-payment-method');
+    const receiptBody = document.getElementById('receipt-body');
+    const paymentHint = document.getElementById('payment-hint');
     const receiptInvoice = document.getElementById('receipt-invoice');
     const receiptItems = document.getElementById('receipt-items');
     const receiptTotalItem = document.getElementById('receipt-total-item');
     const receiptGrandTotal = document.getElementById('receipt-grand-total');
     const printReceiptButton = document.getElementById('print-receipt');
+    const paymentButtons = document.querySelectorAll('.payment-method');
     const csrfToken = @json(csrf_token());
+    const paymentMethodLabels = {
+        cash: 'Cash',
+        gopay: 'Gopay',
+        dana: 'Dana',
+    };
 
     const normalizeQuantityInput = (value) => value.replace(/\D/g, '').replace(/^0+/, '');
 
@@ -315,6 +348,7 @@
                     </div>
                     <div class="row"><span>Invoice</span><span>${state.invoiceNumber}</span></div>
                     <div class="row"><span>Kasir</span><span>Budi Pratama</span></div>
+                    <div class="row"><span>Bayar</span><span>${paymentMethodLabels[state.paymentMethod] ?? '-'}</span></div>
                     <div class="row"><span>Tanggal</span><span>${new Date().toLocaleString('id-ID')}</span></div>
                     <div class="divider"></div>
                     <div class="items">
@@ -347,8 +381,12 @@
 
         receiptPanel.classList.remove('hidden');
         receiptInvoice.textContent = state.invoiceNumber;
+        receiptPaymentMethod.textContent = paymentMethodLabels[state.paymentMethod] ?? '-';
         receiptTotalItem.textContent = String(totalItem);
         receiptGrandTotal.textContent = `Rp ${formatCurrency(grandTotal)}`;
+        receiptBody.classList.toggle('hidden', !state.paymentMethod);
+        paymentHint.classList.toggle('hidden', Boolean(state.paymentMethod));
+        printReceiptButton.disabled = !state.paymentMethod;
 
         receiptItems.innerHTML = state.cart.map((item) => `
             <div class="rounded-2xl border border-white/10 bg-slate-950/35 p-3">
@@ -377,6 +415,11 @@
         const stockExceeded = state.selectedProduct ? quantity > state.selectedProduct.stock : false;
         stockWarning.classList.toggle('hidden', !stockExceeded);
         confirmOrderButton.disabled = !state.selectedProduct || stockExceeded || state.selectedProduct.stock < 1;
+        paymentButtons.forEach((button) => {
+            button.classList.toggle('bg-cyan-400/15', button.dataset.paymentMethod === state.paymentMethod);
+            button.classList.toggle('text-cyan-100', button.dataset.paymentMethod === state.paymentMethod);
+            button.classList.toggle('border-cyan-300/30', button.dataset.paymentMethod === state.paymentMethod);
+        });
         updateReceiptPanel();
     };
 
@@ -423,6 +466,13 @@
         });
     });
 
+    document.querySelectorAll('.payment-method').forEach((button) => {
+        button.addEventListener('click', () => {
+            state.paymentMethod = button.dataset.paymentMethod || '';
+            render();
+        });
+    });
+
     confirmOrderButton.addEventListener('click', () => {
         if (!state.selectedProduct) {
             return;
@@ -466,6 +516,8 @@
                     });
                 }
 
+                state.paymentMethod = '';
+
                 const updatedStock = data.remaining_stock;
                 const productCard = document.querySelector(`[data-product-id="${state.selectedProduct.id}"]`);
                 const stockDisplay = document.querySelector(`[data-stock-display="${state.selectedProduct.id}"]`);
@@ -495,6 +547,7 @@
     document.getElementById('clear-product').addEventListener('click', () => {
         state.selectedProduct = null;
         state.quantityInput = '';
+        state.paymentMethod = '';
         render();
     });
 
@@ -506,11 +559,12 @@
         }
 
         state.cart = state.cart.filter((item) => String(item.id) !== target.dataset.remove);
+        state.paymentMethod = '';
         render();
     });
 
     printReceiptButton.addEventListener('click', () => {
-        if (!state.cart.length) {
+        if (!state.cart.length || !state.paymentMethod) {
             return;
         }
 
