@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Domains\Account\Models\CashierSession;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Carbon;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -34,11 +36,42 @@ class LoginController extends Controller
 
         $request->session()->regenerate();
 
+        $user = $request->user();
+
+        if ($user?->role === 'cashier') {
+            CashierSession::create([
+                'user_id' => $user->id,
+                'session_id' => $request->session()->getId(),
+                'started_at' => Carbon::now(),
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ]);
+        }
+
         return redirect()->intended(route('kasir.dashboard'));
     }
 
     public function destroy(Request $request): RedirectResponse
     {
+        $user = $request->user();
+
+        if ($user?->role === 'cashier') {
+            $activeSession = CashierSession::query()
+                ->where('user_id', $user->id)
+                ->where('session_id', $request->session()->getId())
+                ->whereNull('ended_at')
+                ->latest('started_at')
+                ->first();
+
+            if ($activeSession) {
+                $endedAt = Carbon::now();
+                $activeSession->update([
+                    'ended_at' => $endedAt,
+                    'duration_seconds' => $activeSession->started_at?->diffInSeconds($endedAt) ?? 0,
+                ]);
+            }
+        }
+
         Auth::logout();
 
         $request->session()->invalidate();

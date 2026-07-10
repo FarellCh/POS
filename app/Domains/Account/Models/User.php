@@ -40,4 +40,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Transaction::class, 'user_id');
     }
+
+    public function cashierSessions(): HasMany
+    {
+        return $this->hasMany(CashierSession::class, 'user_id');
+    }
 }

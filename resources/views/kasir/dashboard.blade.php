@@ -9,15 +9,24 @@
 
 <div class="w-full space-y-6">
     <section class="rounded-3xl border border-white/10 bg-white/8 p-6 shadow-2xl backdrop-blur-xl">
-        <div class="w-full rounded-3xl border border-white/10 bg-slate-950/30 p-5 shadow-inner">
+        <div
+            class="w-full rounded-3xl border border-white/10 bg-slate-950/30 p-5 shadow-inner"
+            data-session-started-at="{{ $activeCashierSession?->started_at?->toIso8601String() }}"
+        >
             <div class="flex items-center gap-4">
                 <div class="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-cyan-400/35 bg-slate-950/55 ring-1 ring-cyan-400/15">
-                    <span class="text-lg font-semibold text-cyan-300">K</span>
+                    <span class="text-lg font-semibold text-cyan-300">{{ strtoupper(mb_substr($cashier?->name ?? 'K', 0, 1)) }}</span>
                 </div>
                 <div class="min-w-0 flex-1">
                     <p class="text-xs uppercase tracking-[0.3em] text-cyan-300">Kasir Console</p>
-                    <h1 class="mt-1 text-xl font-semibold text-white sm:text-2xl">Kasir Sample</h1>
-                    <p class="mt-1 text-sm leading-5 text-slate-400">Budi Pratama • 01:24:08 sejak login</p>
+                    <h1 class="mt-1 text-xl font-semibold text-white sm:text-2xl">{{ $cashier?->name ?? 'Kasir Sample' }}</h1>
+                    <p class="mt-1 text-sm leading-5 text-slate-400">
+                        <span class="font-medium text-slate-200">{{ $cashier?->name ?? 'Budi Pratama' }}</span>
+                        <span class="mx-1">•</span>
+                        <span id="cashier-session-elapsed">
+                            {{ $cashierElapsedSeconds !== null ? gmdate('H:i:s', $cashierElapsedSeconds) . ' sejak login' : 'Tracking durasi kerja akan aktif setelah login kasir.' }}
+                        </span>
+                    </p>
                 </div>
                 <div class="flex shrink-0 flex-col items-end gap-3">
                     <span class="flex items-center justify-center rounded-full border border-white/10 bg-slate-950/35 px-4 py-2 text-sm font-semibold leading-5 text-slate-300">
@@ -233,6 +242,32 @@
 @push('scripts')
 <script>
     const formatCurrency = (value) => new Intl.NumberFormat('id-ID').format(value);
+    const formatDuration = (totalSeconds) => {
+        const safeSeconds = Math.max(0, Number(totalSeconds || 0));
+        const hours = String(Math.floor(safeSeconds / 3600)).padStart(2, '0');
+        const minutes = String(Math.floor((safeSeconds % 3600) / 60)).padStart(2, '0');
+        const seconds = String(safeSeconds % 60).padStart(2, '0');
+
+        return `${hours}:${minutes}:${seconds}`;
+    };
+
+    const sessionCard = document.querySelector('[data-session-started-at]');
+    const sessionElapsedElement = document.getElementById('cashier-session-elapsed');
+    const sessionStartedAt = sessionCard?.dataset.sessionStartedAt ? new Date(sessionCard.dataset.sessionStartedAt) : null;
+
+    const renderSessionDuration = () => {
+        if (!sessionStartedAt || Number.isNaN(sessionStartedAt.getTime())) {
+            return;
+        }
+
+        const elapsedSeconds = Math.floor((Date.now() - sessionStartedAt.getTime()) / 1000);
+        sessionElapsedElement.textContent = `${formatDuration(elapsedSeconds)} sejak login`;
+    };
+
+    if (sessionStartedAt && sessionElapsedElement) {
+        renderSessionDuration();
+        setInterval(renderSessionDuration, 1000);
+    }
 
     const state = {
         selectedProduct: null,

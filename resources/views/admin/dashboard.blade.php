@@ -106,7 +106,22 @@
 
                 <div class="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                     @forelse ($recentProducts as $product)
-                        <div class="rounded-2xl border border-white/10 bg-slate-950/35 p-4">
+                        <button
+                            type="button"
+                            class="product-pick text-left rounded-2xl border border-white/10 bg-slate-950/35 p-4 transition hover:border-cyan-400/30 hover:bg-slate-950/50"
+                            data-product-id="{{ $product->id }}"
+                            data-product='@json([
+                                "id" => $product->id,
+                                "category_id" => $product->category_id,
+                                "category_name" => $product->category?->name ?? null,
+                                "sku" => $product->sku,
+                                "name" => $product->name,
+                                "cost_price" => (float) $product->cost_price,
+                                "selling_price" => (float) $product->selling_price,
+                                "stock" => $product->stock,
+                                "is_active" => $product->is_active,
+                            ])'
+                        >
                             <div class="flex items-start justify-between gap-3">
                                 <div>
                                     <p class="text-xs uppercase tracking-[0.25em] text-slate-400">{{ $product->sku }}</p>
@@ -118,7 +133,7 @@
                                 <span class="text-slate-400">Stok</span>
                                 <span class="font-semibold text-white">{{ $product->stock }}</span>
                             </div>
-                        </div>
+                        </button>
                     @empty
                         <div class="rounded-2xl border border-dashed border-white/10 px-4 py-6 text-center text-sm text-slate-400">
                             Belum ada produk.
@@ -173,7 +188,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <h2 class="text-xl font-semibold text-white">Tambah Barang</h2>
-                        <p class="text-sm text-slate-300">Field mengikuti migration `products`.</p>
+                        <p class="text-sm text-slate-300">Klik produk di sebelah kiri untuk isi otomatis.</p>
                     </div>
                 </div>
 
@@ -185,6 +200,25 @@
 
                 <form method="POST" action="{{ route('admin.products.store') }}" class="mt-5 space-y-4">
                     @csrf
+
+                    <input type="hidden" name="product_id" id="product_id" value="{{ old('product_id') }}">
+
+                    <div id="product-selection" class="hidden rounded-2xl border border-cyan-400/20 bg-cyan-400/10 p-4">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <p class="text-xs uppercase tracking-[0.25em] text-cyan-200">Produk terpilih</p>
+                                <p id="selected-product-name" class="mt-1 text-base font-semibold text-white">-</p>
+                                <p id="selected-product-meta" class="mt-1 text-sm text-slate-300">-</p>
+                            </div>
+                            <button
+                                type="button"
+                                id="clear-selected-product"
+                                class="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-slate-200 transition hover:bg-white/10"
+                            >
+                                Batal
+                            </button>
+                        </div>
+                    </div>
 
                     <div>
                         <label for="category_id" class="mb-2 block text-sm font-medium text-slate-200">Kategori</label>
@@ -273,6 +307,7 @@
                                 class="w-full rounded-2xl border border-white/10 bg-slate-950/45 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400/50 focus:outline-none"
                                 placeholder="0"
                             >
+                            <p class="mt-2 text-xs text-slate-400" id="stock-help">Isi stok awal untuk barang baru.</p>
                         </div>
                     </div>
 
@@ -320,3 +355,97 @@
     </section>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    const productCards = document.querySelectorAll('.product-pick');
+    const productIdInput = document.getElementById('product_id');
+    const productSelection = document.getElementById('product-selection');
+    const selectedProductName = document.getElementById('selected-product-name');
+    const selectedProductMeta = document.getElementById('selected-product-meta');
+    const clearSelectedProduct = document.getElementById('clear-selected-product');
+    const stockHelp = document.getElementById('stock-help');
+
+    const categorySelect = document.getElementById('category_id');
+    const skuInput = document.getElementById('sku');
+    const nameInput = document.getElementById('name');
+    const costPriceInput = document.getElementById('cost_price');
+    const sellingPriceInput = document.getElementById('selling_price');
+    const stockInput = document.getElementById('stock');
+    const isActiveInput = document.querySelector('input[name="is_active"]');
+
+    const categoryOptionById = (categoryId) => {
+        return categorySelect.querySelector(`option[value="${categoryId ?? ''}"]`);
+    };
+
+    const resetSelection = () => {
+        productIdInput.value = '';
+        productSelection.classList.add('hidden');
+        selectedProductName.textContent = '-';
+        selectedProductMeta.textContent = '-';
+        stockHelp.textContent = 'Isi stok awal untuk barang baru.';
+        productCards.forEach((card) => {
+            card.classList.remove('border-cyan-400/40', 'bg-cyan-400/10');
+        });
+        categorySelect.value = '';
+        skuInput.value = '';
+        nameInput.value = '';
+        costPriceInput.value = '';
+        sellingPriceInput.value = '';
+        stockInput.value = '0';
+        if (isActiveInput) {
+            isActiveInput.checked = true;
+        }
+    };
+
+    const fillForm = (product) => {
+        productIdInput.value = product.id;
+        productSelection.classList.remove('hidden');
+        selectedProductName.textContent = product.name;
+        selectedProductMeta.textContent = `${product.sku} - ${product.category_name ?? 'Tanpa kategori'} - Stok saat ini: ${product.stock}`;
+        stockHelp.textContent = 'Masukkan jumlah stok yang mau ditambahkan ke produk ini.';
+        productCards.forEach((card) => {
+            card.classList.remove('border-cyan-400/40', 'bg-cyan-400/10');
+        });
+
+        const activeCard = document.querySelector(`.product-pick[data-product-id="${product.id}"]`);
+        if (activeCard) {
+            activeCard.classList.add('border-cyan-400/40', 'bg-cyan-400/10');
+        }
+
+        if (categoryOptionById(product.category_id)) {
+            categorySelect.value = String(product.category_id ?? '');
+        } else {
+            categorySelect.value = '';
+        }
+
+        skuInput.value = product.sku ?? '';
+        nameInput.value = product.name ?? '';
+        costPriceInput.value = product.cost_price ?? '';
+        sellingPriceInput.value = product.selling_price ?? '';
+        stockInput.value = '0';
+        if (isActiveInput) {
+            isActiveInput.checked = Boolean(product.is_active);
+        }
+
+        stockInput.focus();
+        stockInput.select();
+    };
+
+    productCards.forEach((card) => {
+        card.addEventListener('click', () => {
+            const product = JSON.parse(card.dataset.product);
+            fillForm(product);
+        });
+    });
+
+    clearSelectedProduct?.addEventListener('click', resetSelection);
+
+    if (productIdInput.value) {
+        const selectedCard = document.querySelector(`.product-pick[data-product-id="${productIdInput.value}"]`);
+        if (selectedCard) {
+            fillForm(JSON.parse(selectedCard.dataset.product));
+        }
+    }
+</script>
+@endpush

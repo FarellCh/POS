@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Domains\Account\Models\CashierSession;
 use App\Domains\Product\Models\Category;
 use App\Domains\Product\Models\Product;
 use App\Domains\Transaction\Models\Transaction;
+use Illuminate\Support\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -13,6 +15,16 @@ class KasirDashboardController extends Controller
     public function index(Request $request): View
     {
         $search = trim((string) $request->query('search', ''));
+        $cashier = $request->user();
+        $activeSession = null;
+
+        if ($cashier?->role === 'cashier') {
+            $activeSession = CashierSession::query()
+                ->where('user_id', $cashier->id)
+                ->whereNull('ended_at')
+                ->latest('started_at')
+                ->first();
+        }
 
         $statistics = [
             'kategori' => Category::count(),
@@ -52,6 +64,9 @@ class KasirDashboardController extends Controller
             'statistics' => $statistics,
             'products' => $products,
             'search' => $search,
+            'cashier' => $cashier,
+            'activeCashierSession' => $activeSession,
+            'cashierElapsedSeconds' => $activeSession?->started_at ? $activeSession->started_at->diffInSeconds(Carbon::now()) : null,
         ]);
     }
 }
