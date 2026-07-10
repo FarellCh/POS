@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AdminDashboardController;
+use App\Http\Controllers\AdminCashierSessionController;
 use App\Http\Controllers\AdminCategoryController;
 use App\Http\Controllers\AdminProductController;
 use App\Http\Controllers\Auth\LoginController;
@@ -25,6 +26,7 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/cashier-sessions', [AdminCashierSessionController::class, 'index'])->name('cashier-sessions.index');
         Route::post('/categories', [AdminCategoryController::class, 'store'])->name('categories.store');
         Route::post('/products', [AdminProductController::class, 'store'])->name('products.store');
     });

@@ -24,8 +24,8 @@
             </div>
 
             <div class="flex flex-col gap-3 sm:flex-row lg:flex-col">
-                <a href="{{ route('kasir.dashboard') }}" class="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/15">
-                    Buka Kasir
+                <a href="{{ route('admin.cashier-sessions.index') }}" class="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/15">
+                    Data Kasir
                 </a>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
@@ -106,21 +106,24 @@
 
                 <div class="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                     @forelse ($recentProducts as $product)
+                        @php
+                            $productData = [
+                                'id' => $product->id,
+                                'category_id' => $product->category_id,
+                                'category_name' => $product->category?->name,
+                                'sku' => $product->sku,
+                                'name' => $product->name,
+                                'cost_price' => (float) $product->cost_price,
+                                'selling_price' => (float) $product->selling_price,
+                                'stock' => $product->stock,
+                                'is_active' => $product->is_active,
+                            ];
+                        @endphp
                         <button
                             type="button"
                             class="product-pick text-left rounded-2xl border border-white/10 bg-slate-950/35 p-4 transition hover:border-cyan-400/30 hover:bg-slate-950/50"
                             data-product-id="{{ $product->id }}"
-                            data-product='@json([
-                                "id" => $product->id,
-                                "category_id" => $product->category_id,
-                                "category_name" => $product->category?->name ?? null,
-                                "sku" => $product->sku,
-                                "name" => $product->name,
-                                "cost_price" => (float) $product->cost_price,
-                                "selling_price" => (float) $product->selling_price,
-                                "stock" => $product->stock,
-                                "is_active" => $product->is_active,
-                            ])'
+                            data-product='@json($productData)'
                         >
                             <div class="flex items-start justify-between gap-3">
                                 <div>
