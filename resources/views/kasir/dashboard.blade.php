@@ -20,18 +20,11 @@
                 <div class="min-w-0 flex-1">
                     <p class="text-xs uppercase tracking-[0.3em] text-cyan-300">Kasir Console</p>
                     <h1 class="mt-1 text-xl font-semibold text-white sm:text-2xl">{{ $cashier?->name ?? 'Kasir Sample' }}</h1>
-                    <p class="mt-1 text-sm leading-5 text-slate-400">
-                        <span class="font-medium text-slate-200">{{ $cashier?->name ?? 'Budi Pratama' }}</span>
-                        <span class="mx-1">•</span>
-                        <span id="cashier-session-elapsed">
-                            {{ $cashierElapsedSeconds !== null ? gmdate('H:i:s', $cashierElapsedSeconds) . ' sejak login' : 'Tracking durasi kerja akan aktif setelah login kasir.' }}
-                        </span>
+                    <p id="cashier-session-elapsed" class="mt-1 text-sm leading-5 text-slate-400">
+                        {{ $cashierElapsedSeconds !== null ? gmdate('H:i:s', $cashierElapsedSeconds) . ' sejak login' : '00:00:00 sejak login' }}
                     </p>
                 </div>
                 <div class="flex shrink-0 flex-col items-end gap-3">
-                    <span class="flex items-center justify-center rounded-full border border-white/10 bg-slate-950/35 px-4 py-2 text-sm font-semibold leading-5 text-slate-300">
-                        Coming Soon
-                    </span>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
                         <button
@@ -43,10 +36,6 @@
                     </form>
                 </div>
             </div>
-
-            <p class="mt-4 max-w-xl text-sm leading-6 text-slate-400">
-                Tracking durasi kerja akan aktif setelah sistem login kasir siap.
-            </p>
         </div>
     </section>
 
