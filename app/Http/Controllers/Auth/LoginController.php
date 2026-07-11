@@ -65,9 +65,10 @@ class LoginController extends Controller
 
             if ($activeSession) {
                 $endedAt = Carbon::now();
+                $durationSeconds = (int) $activeSession->started_at?->diffInSeconds($endedAt);
                 $activeSession->update([
                     'ended_at' => $endedAt,
-                    'duration_seconds' => $activeSession->started_at?->diffInSeconds($endedAt) ?? 0,
+                    'duration_seconds' => $durationSeconds,
                 ]);
             }
         }

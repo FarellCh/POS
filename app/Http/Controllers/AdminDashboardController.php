@@ -32,7 +32,7 @@ class AdminDashboardController extends Controller
         $recentProducts = Product::query()
             ->with('category')
             ->latest('id')
-            ->limit(5)
+            ->limit(5)  
             ->get();
 
         $recentTransactions = Transaction::query()
