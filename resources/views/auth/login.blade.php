@@ -11,7 +11,6 @@
         <div class="w-full max-w-md rounded-3xl border border-white/10 bg-white/8 p-8 shadow-2xl backdrop-blur-xl">
             <p class="text-xs uppercase tracking-[0.35em] text-cyan-300">KyoraPOS</p>
             <h1 class="mt-3 text-3xl font-semibold text-white">Login Kasir</h1>
-            <p class="mt-2 text-sm leading-6 text-slate-300">Masuk pakai username dan password. Tidak ada register.</p>
 
             @if ($errors->any())
                 <div class="mt-5 rounded-2xl border border-rose-400/20 bg-rose-400/10 p-4 text-sm text-rose-200">
@@ -56,14 +55,6 @@
                     Login
                 </button>
             </form>
-
-            <div class="mt-6 rounded-2xl border border-white/10 bg-slate-950/35 p-4 text-sm text-slate-300">
-                Contoh akun seed:
-                <div class="mt-2 space-y-1 text-slate-200">
-                    <div><span class="text-slate-400">Username:</span> admin</div>
-                    <div><span class="text-slate-400">Password:</span> password</div>
-                </div>
-            </div>
         </div>
     </main>
 </body>
