@@ -177,15 +177,19 @@
 
                 <div class="mt-4 rounded-2xl border border-white/10 bg-slate-950/45 p-4">
                     <div class="flex flex-wrap gap-2">
-                        <button type="button" class="payment-method rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:bg-white/10" data-payment-method="cash">
-                            Cash
-                        </button>
-                        <button type="button" class="payment-method rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:bg-white/10" data-payment-method="gopay">
-                            Gopay
-                        </button>
-                        <button type="button" class="payment-method rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:bg-white/10" data-payment-method="dana">
-                            Dana
-                        </button>
+                        @forelse ($paymentMethods as $paymentMethod)
+                            <button
+                                type="button"
+                                class="payment-method rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:bg-white/10"
+                                data-payment-method="{{ $paymentMethod->code }}"
+                            >
+                                {{ $paymentMethod->label }}
+                            </button>
+                        @empty
+                            <div class="rounded-2xl border border-dashed border-white/10 px-4 py-3 text-sm text-slate-400">
+                                Belum ada metode payment aktif.
+                            </div>
+                        @endforelse
                     </div>
 
                     <div class="mt-4 flex items-center justify-between rounded-2xl border border-cyan-400/15 bg-slate-950/45 px-4 py-3">
@@ -281,11 +285,7 @@
     const printReceiptButton = document.getElementById('print-receipt');
     const paymentButtons = document.querySelectorAll('.payment-method');
     const csrfToken = @json(csrf_token());
-    const paymentMethodLabels = {
-        cash: 'Cash',
-        gopay: 'Gopay',
-        dana: 'Dana',
-    };
+    const paymentMethodLabels = @json($paymentMethods->pluck('label', 'code'));
 
     const normalizeQuantityInput = (value) => value.replace(/\D/g, '').replace(/^0+/, '');
 

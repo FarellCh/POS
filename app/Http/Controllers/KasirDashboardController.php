@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Domains\Account\Models\CashierSession;
+use App\Domains\Payment\Models\PaymentMethod;
 use App\Domains\Product\Models\Category;
 use App\Domains\Product\Models\Product;
 use App\Domains\Transaction\Models\Transaction;
@@ -32,6 +33,11 @@ class KasirDashboardController extends Controller
             'stok_rendah' => Product::where('is_active', true)->where('stock', '<=', 10)->count(),
             'transaksi_hari_ini' => Transaction::whereDate('created_at', today())->count(),
         ];
+
+        $paymentMethods = PaymentMethod::query()
+            ->active()
+            ->ordered()
+            ->get(['code', 'label']);
 
         $products = Product::query()
             ->with('category')
@@ -67,6 +73,7 @@ class KasirDashboardController extends Controller
             'cashier' => $cashier,
             'activeCashierSession' => $activeSession,
             'cashierElapsedSeconds' => $activeSession?->started_at ? $activeSession->started_at->diffInSeconds(Carbon::now()) : null,
+            'paymentMethods' => $paymentMethods,
         ]);
     }
 }
