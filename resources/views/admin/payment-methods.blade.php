@@ -67,6 +67,7 @@
                         <tr>
                             <th class="px-4 py-3 font-medium">Kode</th>
                             <th class="px-4 py-3 font-medium">Label</th>
+                            <th class="px-4 py-3 font-medium">Nomor</th>
                             <th class="px-4 py-3 font-medium">Urutan</th>
                             <th class="px-4 py-3 font-medium">Aktif</th>
                         </tr>
@@ -86,6 +87,18 @@
                                         value="{{ $paymentMethod->label }}"
                                         class="w-full rounded-2xl border border-white/10 bg-slate-950/45 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400/50 focus:outline-none"
                                     >
+                                </td>
+                                <td class="px-4 py-3 align-top">
+                                    <input
+                                        type="text"
+                                        name="methods[{{ $paymentMethod->id }}][account_number]"
+                                        value="{{ $paymentMethod->account_number }}"
+                                        class="w-full rounded-2xl border border-white/10 bg-slate-950/45 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400/50 focus:outline-none"
+                                        placeholder="{{ $paymentMethod->code === 'cash' ? 'Kosongkan untuk cash' : 'Nomor rekening / e-wallet' }}"
+                                    >
+                                    <p class="mt-2 text-xs text-slate-400">
+                                        {{ $paymentMethod->code === 'cash' ? 'Cash tidak perlu nomor.' : 'Wajib diisi untuk payment non-cash.' }}
+                                    </p>
                                 </td>
                                 <td class="px-4 py-3 align-top">
                                     <input
@@ -111,7 +124,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="4" class="px-4 py-6 text-center text-slate-400">
+                                <td colspan="5" class="px-4 py-6 text-center text-slate-400">
                                     Belum ada metode payment.
                                 </td>
                             </tr>
@@ -156,6 +169,18 @@
                     class="w-full rounded-2xl border border-white/10 bg-slate-950/45 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400/50 focus:outline-none"
                     placeholder="contoh: QRIS"
                     required
+                >
+            </div>
+
+            <div>
+                <label for="account_number" class="mb-2 block text-sm font-medium text-slate-200">Nomor</label>
+                <input
+                    id="account_number"
+                    name="account_number"
+                    type="text"
+                    value="{{ old('account_number') }}"
+                    class="w-full rounded-2xl border border-white/10 bg-slate-950/45 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400/50 focus:outline-none"
+                    placeholder="kosongkan untuk cash"
                 >
             </div>
 

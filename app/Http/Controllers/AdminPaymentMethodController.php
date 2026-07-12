@@ -7,6 +7,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class AdminPaymentMethodController extends Controller
@@ -27,19 +28,29 @@ class AdminPaymentMethodController extends Controller
         $validated = $request->validate([
             'methods' => ['required', 'array'],
             'methods.*.label' => ['required', 'string', 'max:100'],
+            'methods.*.account_number' => ['nullable', 'string', 'max:100'],
             'methods.*.is_active' => ['nullable', 'boolean'],
             'methods.*.sort_order' => ['required', 'integer', 'min:0'],
         ]);
 
         DB::transaction(function () use ($validated, $request): void {
             foreach ($validated['methods'] as $methodId => $methodData) {
-                PaymentMethod::query()
-                    ->whereKey((int) $methodId)
-                    ->update([
-                        'label' => $methodData['label'],
-                        'is_active' => $request->has("methods.{$methodId}.is_active"),
-                        'sort_order' => $methodData['sort_order'],
+                $paymentMethod = PaymentMethod::query()->findOrFail((int) $methodId);
+
+                $accountNumber = trim((string) ($methodData['account_number'] ?? ''));
+
+                if ($paymentMethod->code !== 'cash' && $accountNumber === '') {
+                    throw ValidationException::withMessages([
+                        "methods.{$methodId}.account_number" => 'Nomor payment wajib diisi untuk metode ini.',
                     ]);
+                }
+
+                $paymentMethod->update([
+                    'label' => $methodData['label'],
+                    'account_number' => $paymentMethod->code === 'cash' ? null : $accountNumber,
+                    'is_active' => $request->has("methods.{$methodId}.is_active"),
+                    'sort_order' => $methodData['sort_order'],
+                ]);
             }
         });
 
@@ -53,13 +64,24 @@ class AdminPaymentMethodController extends Controller
         $validated = $request->validate([
             'code' => ['required', 'string', 'max:50', 'alpha_dash', 'unique:payment_methods,code'],
             'label' => ['required', 'string', 'max:100'],
+            'account_number' => ['nullable', 'string', 'max:100'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
             'is_active' => ['nullable', 'boolean'],
         ]);
 
+        $code = Str::lower($validated['code']);
+        $accountNumber = trim((string) ($validated['account_number'] ?? ''));
+
+        if ($code !== 'cash' && $accountNumber === '') {
+            throw ValidationException::withMessages([
+                'account_number' => 'Nomor payment wajib diisi untuk metode non-cash.',
+            ]);
+        }
+
         PaymentMethod::create([
-            'code' => Str::lower($validated['code']),
+            'code' => $code,
             'label' => $validated['label'],
+            'account_number' => $code === 'cash' ? null : $accountNumber,
             'sort_order' => $validated['sort_order'] ?? 0,
             'is_active' => $request->boolean('is_active', true),
         ]);

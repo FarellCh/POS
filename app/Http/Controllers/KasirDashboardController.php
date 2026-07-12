@@ -37,7 +37,7 @@ class KasirDashboardController extends Controller
         $paymentMethods = PaymentMethod::query()
             ->active()
             ->ordered()
-            ->get(['code', 'label']);
+            ->get(['code', 'label', 'account_number']);
 
         $products = Product::query()
             ->with('category')

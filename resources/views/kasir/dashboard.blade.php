@@ -196,6 +196,7 @@
                         <div>
                             <p class="text-xs uppercase tracking-[0.25em] text-slate-400">Metode aktif</p>
                             <p id="receipt-payment-method" class="mt-1 font-semibold text-white">-</p>
+                            <p id="receipt-payment-number" class="mt-1 hidden text-sm text-slate-300"></p>
                         </div>
                         <p id="payment-hint" class="text-sm text-slate-400">Pilih metode pembayaran dulu untuk menampilkan struk.</p>
                     </div>
@@ -276,6 +277,7 @@
     const confirmOrderButton = document.getElementById('confirm-order');
     const receiptPanel = document.getElementById('receipt-panel');
     const receiptPaymentMethod = document.getElementById('receipt-payment-method');
+    const receiptPaymentNumber = document.getElementById('receipt-payment-number');
     const receiptBody = document.getElementById('receipt-body');
     const paymentHint = document.getElementById('payment-hint');
     const receiptInvoice = document.getElementById('receipt-invoice');
@@ -285,7 +287,10 @@
     const printReceiptButton = document.getElementById('print-receipt');
     const paymentButtons = document.querySelectorAll('.payment-method');
     const csrfToken = @json(csrf_token());
-    const paymentMethodLabels = @json($paymentMethods->pluck('label', 'code'));
+    const paymentMethodDetails = @json($paymentMethods->keyBy('code')->map(fn ($paymentMethod) => [
+        'label' => $paymentMethod->label,
+        'account_number' => $paymentMethod->account_number,
+    ]));
 
     const normalizeQuantityInput = (value) => value.replace(/\D/g, '').replace(/^0+/, '');
 
@@ -303,6 +308,8 @@
 
     const buildReceiptHtml = () => {
         const { totalItem, grandTotal } = getCartTotals();
+        const paymentLabel = paymentMethodDetails[state.paymentMethod]?.label ?? '-';
+        const paymentAccountNumber = paymentMethodDetails[state.paymentMethod]?.account_number ?? '';
 
         return `
             <!DOCTYPE html>
@@ -372,7 +379,8 @@
                     </div>
                     <div class="row"><span>Invoice</span><span>${state.invoiceNumber}</span></div>
                     <div class="row"><span>Kasir</span><span>Budi Pratama</span></div>
-                    <div class="row"><span>Bayar</span><span>${paymentMethodLabels[state.paymentMethod] ?? '-'}</span></div>
+                    <div class="row"><span>Bayar</span><span>${paymentLabel}</span></div>
+                    ${paymentAccountNumber ? `<div class="row"><span>Nomor</span><span>${paymentAccountNumber}</span></div>` : ''}
                     <div class="row"><span>Tanggal</span><span>${new Date().toLocaleString('id-ID')}</span></div>
                     <div class="divider"></div>
                     <div class="items">
@@ -405,7 +413,10 @@
 
         receiptPanel.classList.remove('hidden');
         receiptInvoice.textContent = state.invoiceNumber;
-        receiptPaymentMethod.textContent = paymentMethodLabels[state.paymentMethod] ?? '-';
+        receiptPaymentMethod.textContent = paymentMethodDetails[state.paymentMethod]?.label ?? '-';
+        const paymentAccountNumber = paymentMethodDetails[state.paymentMethod]?.account_number ?? '';
+        receiptPaymentNumber.textContent = paymentAccountNumber ? `Nomor: ${paymentAccountNumber}` : '';
+        receiptPaymentNumber.classList.toggle('hidden', !paymentAccountNumber);
         receiptTotalItem.textContent = String(totalItem);
         receiptGrandTotal.textContent = `Rp ${formatCurrency(grandTotal)}`;
         receiptBody.classList.toggle('hidden', !state.paymentMethod);
