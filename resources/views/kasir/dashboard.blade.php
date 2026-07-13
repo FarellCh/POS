@@ -201,6 +201,21 @@
                         <p id="payment-hint" class="text-sm text-slate-400">Pilih metode pembayaran dulu untuk menampilkan struk.</p>
                     </div>
 
+                    <div class="mt-4 flex flex-col gap-3 rounded-2xl border border-white/10 bg-slate-950/35 p-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <p class="text-xs uppercase tracking-[0.25em] text-slate-400">Status pembayaran</p>
+                            <p id="payment-status" class="mt-1 font-semibold text-slate-200">Menunggu konfirmasi</p>
+                        </div>
+                        <button
+                            type="button"
+                            id="confirm-payment"
+                            class="rounded-2xl bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
+                            disabled
+                        >
+                            Konfirmasi Pembayaran
+                        </button>
+                    </div>
+
                     <div id="receipt-body" class="hidden">
                         <div class="flex items-center justify-between">
                             <div>
@@ -268,6 +283,7 @@
         quantityInput: '',
         cart: [],
         paymentMethod: '',
+        paymentConfirmed: false,
         invoiceNumber: `INV-${new Date().toISOString().slice(0, 10).replaceAll('-', '')}-${Math.floor(Math.random() * 9000 + 1000)}`,
     };
 
@@ -278,6 +294,8 @@
     const receiptPanel = document.getElementById('receipt-panel');
     const receiptPaymentMethod = document.getElementById('receipt-payment-method');
     const receiptPaymentNumber = document.getElementById('receipt-payment-number');
+    const paymentStatus = document.getElementById('payment-status');
+    const confirmPaymentButton = document.getElementById('confirm-payment');
     const receiptBody = document.getElementById('receipt-body');
     const paymentHint = document.getElementById('payment-hint');
     const receiptInvoice = document.getElementById('receipt-invoice');
@@ -381,6 +399,7 @@
                     <div class="row"><span>Kasir</span><span>Budi Pratama</span></div>
                     <div class="row"><span>Bayar</span><span>${paymentLabel}</span></div>
                     ${paymentAccountNumber ? `<div class="row"><span>Nomor</span><span>${paymentAccountNumber}</span></div>` : ''}
+                    <div class="row"><span>Status</span><span>Lunas</span></div>
                     <div class="row"><span>Tanggal</span><span>${new Date().toLocaleString('id-ID')}</span></div>
                     <div class="divider"></div>
                     <div class="items">
@@ -419,9 +438,24 @@
         receiptPaymentNumber.classList.toggle('hidden', !paymentAccountNumber);
         receiptTotalItem.textContent = String(totalItem);
         receiptGrandTotal.textContent = `Rp ${formatCurrency(grandTotal)}`;
-        receiptBody.classList.toggle('hidden', !state.paymentMethod);
-        paymentHint.classList.toggle('hidden', Boolean(state.paymentMethod));
-        printReceiptButton.disabled = !state.paymentMethod;
+        const paymentReady = Boolean(state.paymentMethod);
+        const paymentDone = paymentReady && state.paymentConfirmed;
+
+        receiptBody.classList.toggle('hidden', !paymentDone);
+        paymentHint.classList.toggle('hidden', paymentReady);
+        paymentStatus.textContent = state.paymentConfirmed
+            ? 'Pembayaran terkonfirmasi'
+            : paymentReady
+                ? 'Menunggu konfirmasi'
+                : 'Menunggu metode pembayaran';
+        paymentStatus.className = state.paymentConfirmed
+            ? 'mt-1 font-semibold text-emerald-300'
+            : paymentReady
+                ? 'mt-1 font-semibold text-amber-300'
+                : 'mt-1 font-semibold text-slate-200';
+        confirmPaymentButton.disabled = !paymentReady;
+        confirmPaymentButton.textContent = state.paymentConfirmed ? 'Sudah Terkonfirmasi' : 'Konfirmasi Pembayaran';
+        printReceiptButton.disabled = !paymentDone;
 
         receiptItems.innerHTML = state.cart.map((item) => `
             <div class="rounded-2xl border border-white/10 bg-slate-950/35 p-3">
@@ -504,8 +538,18 @@
     document.querySelectorAll('.payment-method').forEach((button) => {
         button.addEventListener('click', () => {
             state.paymentMethod = button.dataset.paymentMethod || '';
+            state.paymentConfirmed = false;
             render();
         });
+    });
+
+    confirmPaymentButton.addEventListener('click', () => {
+        if (!state.paymentMethod || !state.cart.length) {
+            return;
+        }
+
+        state.paymentConfirmed = true;
+        render();
     });
 
     confirmOrderButton.addEventListener('click', () => {
@@ -552,6 +596,7 @@
                 }
 
                 state.paymentMethod = '';
+                state.paymentConfirmed = false;
 
                 const updatedStock = data.remaining_stock;
                 const productCard = document.querySelector(`[data-product-id="${state.selectedProduct.id}"]`);
@@ -583,6 +628,7 @@
         state.selectedProduct = null;
         state.quantityInput = '';
         state.paymentMethod = '';
+        state.paymentConfirmed = false;
         render();
     });
 
@@ -595,11 +641,12 @@
 
         state.cart = state.cart.filter((item) => String(item.id) !== target.dataset.remove);
         state.paymentMethod = '';
+        state.paymentConfirmed = false;
         render();
     });
 
     printReceiptButton.addEventListener('click', () => {
-        if (!state.cart.length || !state.paymentMethod) {
+        if (!state.cart.length || !state.paymentMethod || !state.paymentConfirmed) {
             return;
         }
 
