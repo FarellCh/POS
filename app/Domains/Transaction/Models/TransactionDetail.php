@@ -8,8 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class TransactionDetail extends Model
 {
-    // Tabel pivot/detail ini tidak memerlukan timestamps bawaan Laravel
-    Public $timestamps = false; 
+    public $timestamps = false;
 
     protected $fillable = [
         'transaction_id',

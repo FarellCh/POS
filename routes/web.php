@@ -9,6 +9,7 @@ use App\Http\Controllers\AdminProductController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\KasirDashboardController;
 use App\Http\Controllers\KasirOrderController;
+use App\Http\Controllers\KasirTransactionController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -24,6 +25,7 @@ Route::middleware('auth')->group(function () {
     Route::prefix('kasir')->name('kasir.')->group(function () {
         Route::get('/', [KasirDashboardController::class, 'index'])->name('dashboard');
         Route::post('/confirm-item', [KasirOrderController::class, 'store'])->name('confirm-item');
+        Route::post('/transactions', [KasirTransactionController::class, 'store'])->name('transactions.store');
     });
 
     Route::prefix('admin')->name('admin.')->group(function () {

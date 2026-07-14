@@ -284,6 +284,7 @@
         cart: [],
         paymentMethod: '',
         paymentConfirmed: false,
+        saleFinalized: false,
         invoiceNumber: `INV-${new Date().toISOString().slice(0, 10).replaceAll('-', '')}-${Math.floor(Math.random() * 9000 + 1000)}`,
     };
 
@@ -309,6 +310,7 @@
         'label' => $paymentMethod->label,
         'account_number' => $paymentMethod->account_number,
     ]));
+    const finalizeTransactionUrl = @json(route('kasir.transactions.store'));
 
     const normalizeQuantityInput = (value) => value.replace(/\D/g, '').replace(/^0+/, '');
 
@@ -453,9 +455,20 @@
             : paymentReady
                 ? 'mt-1 font-semibold text-amber-300'
                 : 'mt-1 font-semibold text-slate-200';
-        confirmPaymentButton.disabled = !paymentReady;
+        confirmPaymentButton.disabled = !paymentReady || state.saleFinalized;
         confirmPaymentButton.textContent = state.paymentConfirmed ? 'Sudah Terkonfirmasi' : 'Konfirmasi Pembayaran';
         printReceiptButton.disabled = !paymentDone;
+
+        paymentButtons.forEach((button) => {
+            button.disabled = state.saleFinalized;
+        });
+
+        document.querySelectorAll('.product-card').forEach((button) => {
+            button.disabled = state.saleFinalized;
+        });
+
+        document.getElementById('clear-product').disabled = state.saleFinalized;
+        confirmOrderButton.disabled = state.saleFinalized || !state.selectedProduct || stockExceeded || state.selectedProduct.stock < 1;
 
         receiptItems.innerHTML = state.cart.map((item) => `
             <div class="rounded-2xl border border-white/10 bg-slate-950/35 p-3">
@@ -494,6 +507,10 @@
 
     document.querySelectorAll('.product-card').forEach((button) => {
         button.addEventListener('click', () => {
+            if (state.saleFinalized) {
+                return;
+            }
+
             state.selectedProduct = JSON.parse(button.dataset.product);
             state.quantityInput = '';
             render();
@@ -502,6 +519,10 @@
 
     document.querySelectorAll('.calc-key').forEach((button) => {
         button.addEventListener('click', () => {
+            if (state.saleFinalized) {
+                return;
+            }
+
             const key = button.dataset.key;
             const nextValue = normalizeQuantityInput(`${state.quantityInput}${key}`);
             state.quantityInput = nextValue === '' ? '1' : nextValue;
@@ -511,6 +532,10 @@
 
     document.querySelectorAll('.calc-action').forEach((button) => {
         button.addEventListener('click', () => {
+            if (state.saleFinalized) {
+                return;
+            }
+
             const action = button.dataset.action;
 
             if (action === 'clear') {
@@ -537,6 +562,10 @@
 
     document.querySelectorAll('.payment-method').forEach((button) => {
         button.addEventListener('click', () => {
+            if (state.saleFinalized) {
+                return;
+            }
+
             state.paymentMethod = button.dataset.paymentMethod || '';
             state.paymentConfirmed = false;
             render();
@@ -544,12 +573,45 @@
     });
 
     confirmPaymentButton.addEventListener('click', () => {
-        if (!state.paymentMethod || !state.cart.length) {
+        if (!state.paymentMethod || !state.cart.length || state.saleFinalized) {
             return;
         }
 
-        state.paymentConfirmed = true;
-        render();
+        confirmPaymentButton.disabled = true;
+
+        fetch(finalizeTransactionUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+            },
+            body: JSON.stringify({
+                invoice_number: state.invoiceNumber,
+                payment_method: state.paymentMethod,
+                cart: state.cart.map((item) => ({
+                    product_id: item.id,
+                    quantity: item.quantity,
+                })),
+            }),
+        })
+            .then(async (response) => {
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || 'Gagal menyimpan transaksi.');
+                }
+
+                return response.json();
+            })
+            .then(() => {
+                state.paymentConfirmed = true;
+                state.saleFinalized = true;
+                render();
+            })
+            .catch((error) => {
+                alert(error.message);
+                render();
+            });
     });
 
     confirmOrderButton.addEventListener('click', () => {
@@ -625,6 +687,10 @@
     });
 
     document.getElementById('clear-product').addEventListener('click', () => {
+        if (state.saleFinalized) {
+            return;
+        }
+
         state.selectedProduct = null;
         state.quantityInput = '';
         state.paymentMethod = '';
@@ -636,6 +702,10 @@
         const target = event.target.closest('button');
 
         if (!target || !target.dataset.remove) {
+            return;
+        }
+
+        if (state.saleFinalized) {
             return;
         }
 

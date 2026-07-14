@@ -20,7 +20,7 @@ class Transaction extends Model
         'grand_total',
         'paid_amount',
         'change_amount',
-        'payment_method'
+        'payment_method',
     ];
 
     protected $casts = [
