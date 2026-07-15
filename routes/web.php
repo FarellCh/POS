@@ -4,6 +4,7 @@ use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\AdminCashierSessionController;
 use App\Http\Controllers\AdminCashierUserController;
 use App\Http\Controllers\AdminPaymentMethodController;
+use App\Http\Controllers\AdminTransactionController;
 use App\Http\Controllers\AdminCategoryController;
 use App\Http\Controllers\AdminProductController;
 use App\Http\Controllers\Auth\LoginController;
@@ -37,5 +38,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/payment-methods/store', [AdminPaymentMethodController::class, 'store'])->name('payment-methods.store');
         Route::post('/categories', [AdminCategoryController::class, 'store'])->name('categories.store');
         Route::post('/products', [AdminProductController::class, 'store'])->name('products.store');
+        Route::get('/products/{product}/edit', [AdminProductController::class, 'edit'])->name('products.edit');
+        Route::patch('/products/{product}', [AdminProductController::class, 'update'])->name('products.update');
+        Route::post('/transactions/{transaction}/void', [AdminTransactionController::class, 'void'])->name('transactions.void');
     });
 });

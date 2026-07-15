@@ -3,8 +3,8 @@
 namespace App\Domains\Transaction\Models;
 
 use App\Domains\Account\Models\User;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Transaction extends Model
@@ -21,6 +21,10 @@ class Transaction extends Model
         'paid_amount',
         'change_amount',
         'payment_method',
+        'is_voided',
+        'voided_at',
+        'voided_by',
+        'void_reason',
     ];
 
     protected $casts = [
@@ -30,11 +34,18 @@ class Transaction extends Model
         'grand_total' => 'decimal:2',
         'paid_amount' => 'decimal:2',
         'change_amount' => 'decimal:2',
+        'is_voided' => 'boolean',
+        'voided_at' => 'datetime',
     ];
 
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function voidedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'voided_by');
     }
 
     public function details(): HasMany

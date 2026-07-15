@@ -36,7 +36,7 @@ class AdminDashboardController extends Controller
             ->get();
 
         $recentTransactions = Transaction::query()
-            ->with(['user', 'details.product'])
+            ->with(['user', 'voidedBy', 'details.product'])
             ->latest('created_at')
             ->limit(5)
             ->get();

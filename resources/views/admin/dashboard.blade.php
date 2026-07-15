@@ -74,6 +74,8 @@
                                 <th class="px-4 py-3 font-medium">Kasir</th>
                                 <th class="px-4 py-3 font-medium">Metode</th>
                                 <th class="px-4 py-3 font-medium">Total</th>
+                                <th class="px-4 py-3 font-medium">Status</th>
+                                <th class="px-4 py-3 font-medium">Aksi</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-white/10 bg-slate-950/20 text-slate-100">
@@ -83,10 +85,39 @@
                                     <td class="px-4 py-3">{{ $transaction->user?->name ?? '-' }}</td>
                                     <td class="px-4 py-3 text-slate-300">{{ $transaction->payment_method }}</td>
                                     <td class="px-4 py-3">Rp {{ number_format((float) $transaction->grand_total, 0, ',', '.') }}</td>
+                                    <td class="px-4 py-3">
+                                        @if ($transaction->is_voided)
+                                            <span class="rounded-full border border-rose-400/30 bg-rose-400/10 px-3 py-1 text-xs font-semibold text-rose-200">Void</span>
+                                        @else
+                                            <span class="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-xs font-semibold text-emerald-300">Lunas</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        @if (! $transaction->is_voided)
+                                            <form method="POST" action="{{ route('admin.transactions.void', $transaction) }}" class="flex flex-col gap-2">
+                                                @csrf
+                                                <input
+                                                    type="text"
+                                                    name="void_reason"
+                                                    value="{{ old('void_reason') }}"
+                                                    class="w-full rounded-2xl border border-white/10 bg-slate-950/45 px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:border-rose-400/50 focus:outline-none"
+                                                    placeholder="Alasan void"
+                                                    required
+                                                >
+                                                <button type="submit" class="rounded-2xl bg-rose-500 px-3 py-2 text-xs font-semibold text-white transition hover:bg-rose-400">
+                                                    Void
+                                                </button>
+                                            </form>
+                                        @else
+                                            <p class="text-xs text-slate-400">
+                                                Di-void oleh {{ $transaction->voidedBy?->name ?? '-' }}
+                                            </p>
+                                        @endif
+                                    </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="4" class="px-4 py-6 text-center text-slate-400">
+                                    <td colspan="6" class="px-4 py-6 text-center text-slate-400">
                                         Belum ada transaksi.
                                     </td>
                                 </tr>
@@ -119,24 +150,32 @@
                                 'is_active' => $product->is_active,
                             ];
                         @endphp
-                        <button
-                            type="button"
-                            class="product-pick text-left rounded-2xl border border-white/10 bg-slate-950/35 p-4 transition hover:border-cyan-400/30 hover:bg-slate-950/50"
-                            data-product-id="{{ $product->id }}"
-                            data-product='@json($productData)'
-                        >
-                            <div class="flex items-start justify-between gap-3">
-                                <div>
-                                    <p class="text-xs uppercase tracking-[0.25em] text-slate-400">{{ $product->sku }}</p>
-                                    <h3 class="mt-2 text-base font-semibold text-white">{{ $product->name }}</h3>
+                        <div class="relative rounded-2xl border border-white/10 bg-slate-950/35 p-4 transition hover:border-cyan-400/30 hover:bg-slate-950/50">
+                            <a
+                                href="{{ route('admin.products.edit', $product) }}"
+                                class="absolute right-3 top-3 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-slate-200 transition hover:bg-white/10"
+                            >
+                                Edit
+                            </a>
+                            <button
+                                type="button"
+                                class="product-pick text-left"
+                                data-product-id="{{ $product->id }}"
+                                data-product='@json($productData)'
+                            >
+                                <div class="flex items-start justify-between gap-3 pr-16">
+                                    <div>
+                                        <p class="text-xs uppercase tracking-[0.25em] text-slate-400">{{ $product->sku }}</p>
+                                        <h3 class="mt-2 text-base font-semibold text-white">{{ $product->name }}</h3>
+                                    </div>
+                                    <span class="rounded-full bg-white/5 px-2 py-1 text-xs text-slate-300">{{ $product->category?->name ?? '-' }}</span>
                                 </div>
-                                <span class="rounded-full bg-white/5 px-2 py-1 text-xs text-slate-300">{{ $product->category?->name ?? '-' }}</span>
-                            </div>
-                            <div class="mt-4 flex items-center justify-between text-sm">
-                                <span class="text-slate-400">Stok</span>
-                                <span class="font-semibold text-white">{{ $product->stock }}</span>
-                            </div>
-                        </button>
+                                <div class="mt-4 flex items-center justify-between text-sm">
+                                    <span class="text-slate-400">Stok</span>
+                                    <span class="font-semibold text-white">{{ $product->stock }}</span>
+                                </div>
+                            </button>
+                        </div>
                     @empty
                         <div class="rounded-2xl border border-dashed border-white/10 px-4 py-6 text-center text-sm text-slate-400">
                             Belum ada produk.
