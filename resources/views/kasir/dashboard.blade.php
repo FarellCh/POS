@@ -216,6 +216,26 @@
                         </button>
                     </div>
 
+                    <div id="cash-handling-panel" class="mt-4 hidden rounded-2xl border border-amber-400/15 bg-amber-400/5 p-4">
+                        <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                            <div class="flex-1">
+                                <label for="cash-received" class="mb-2 block text-sm font-medium text-amber-100">Uang diterima</label>
+                                <input
+                                    id="cash-received"
+                                    type="text"
+                                    inputmode="numeric"
+                                    autocomplete="off"
+                                    placeholder="Masukkan nominal cash"
+                                    class="w-full rounded-2xl border border-amber-400/20 bg-slate-950/45 px-4 py-3 text-white placeholder:text-slate-500 focus:border-amber-300/60 focus:outline-none"
+                                >
+                            </div>
+                            <div class="rounded-2xl border border-white/10 bg-slate-950/35 px-4 py-3">
+                                <p class="text-xs uppercase tracking-[0.25em] text-slate-400">Kembalian</p>
+                                <p id="cash-change" class="mt-1 text-lg font-semibold text-amber-300">Rp 0</p>
+                            </div>
+                        </div>
+                    </div>
+
                     <div id="receipt-body" class="hidden">
                         <div class="flex items-center justify-between">
                             <div>
@@ -231,6 +251,14 @@
                         <div id="receipt-items" class="mt-4 space-y-3"></div>
 
                         <div class="mt-4 border-t border-white/10 pt-4 space-y-2 text-sm">
+                            <div class="flex items-center justify-between text-slate-300">
+                                <span>Dibayar</span>
+                                <span id="receipt-paid-amount" class="font-semibold text-white">Rp 0</span>
+                            </div>
+                            <div class="flex items-center justify-between text-slate-300">
+                                <span>Kembalian</span>
+                                <span id="receipt-change-amount" class="font-semibold text-amber-300">Rp 0</span>
+                            </div>
                             <div class="flex items-center justify-between text-slate-300">
                                 <span>Total Item</span>
                                 <span id="receipt-total-item" class="font-semibold text-white">0</span>
@@ -283,6 +311,7 @@
         quantityInput: '',
         cart: [],
         paymentMethod: '',
+        cashReceivedInput: '',
         paymentConfirmed: false,
         saleFinalized: false,
         invoiceNumber: `INV-${new Date().toISOString().slice(0, 10).replaceAll('-', '')}-${Math.floor(Math.random() * 9000 + 1000)}`,
@@ -297,10 +326,15 @@
     const receiptPaymentNumber = document.getElementById('receipt-payment-number');
     const paymentStatus = document.getElementById('payment-status');
     const confirmPaymentButton = document.getElementById('confirm-payment');
+    const cashHandlingPanel = document.getElementById('cash-handling-panel');
+    const cashReceivedInput = document.getElementById('cash-received');
+    const cashChangeDisplay = document.getElementById('cash-change');
     const receiptBody = document.getElementById('receipt-body');
     const paymentHint = document.getElementById('payment-hint');
     const receiptInvoice = document.getElementById('receipt-invoice');
     const receiptItems = document.getElementById('receipt-items');
+    const receiptPaidAmount = document.getElementById('receipt-paid-amount');
+    const receiptChangeAmount = document.getElementById('receipt-change-amount');
     const receiptTotalItem = document.getElementById('receipt-total-item');
     const receiptGrandTotal = document.getElementById('receipt-grand-total');
     const printReceiptButton = document.getElementById('print-receipt');
@@ -311,6 +345,8 @@
         'account_number' => $paymentMethod->account_number,
     ]));
     const finalizeTransactionUrl = @json(route('kasir.transactions.store'));
+    const moneyOnlyDigits = (value) => value.replace(/\D/g, '');
+    const getMoneyValue = () => parseInt(state.cashReceivedInput || '0', 10) || 0;
 
     const normalizeQuantityInput = (value) => value.replace(/\D/g, '').replace(/^0+/, '');
 
@@ -326,10 +362,14 @@
         return { totalItem, grandTotal };
     };
 
+    const formatMoney = (value) => `Rp ${formatCurrency(value)}`;
+
     const buildReceiptHtml = () => {
         const { totalItem, grandTotal } = getCartTotals();
         const paymentLabel = paymentMethodDetails[state.paymentMethod]?.label ?? '-';
         const paymentAccountNumber = paymentMethodDetails[state.paymentMethod]?.account_number ?? '';
+        const paidAmount = state.paymentMethod === 'cash' ? getMoneyValue() : grandTotal;
+        const changeAmount = Math.max(0, paidAmount - grandTotal);
 
         return `
             <!DOCTYPE html>
@@ -401,6 +441,8 @@
                     <div class="row"><span>Kasir</span><span>Budi Pratama</span></div>
                     <div class="row"><span>Bayar</span><span>${paymentLabel}</span></div>
                     ${paymentAccountNumber ? `<div class="row"><span>Nomor</span><span>${paymentAccountNumber}</span></div>` : ''}
+                    <div class="row"><span>Dibayar</span><span>${formatMoney(paidAmount)}</span></div>
+                    <div class="row"><span>Kembalian</span><span>${formatMoney(changeAmount)}</span></div>
                     <div class="row"><span>Status</span><span>Lunas</span></div>
                     <div class="row"><span>Tanggal</span><span>${new Date().toLocaleString('id-ID')}</span></div>
                     <div class="divider"></div>
@@ -441,7 +483,12 @@
         receiptTotalItem.textContent = String(totalItem);
         receiptGrandTotal.textContent = `Rp ${formatCurrency(grandTotal)}`;
         const paymentReady = Boolean(state.paymentMethod);
+        const isCashPayment = state.paymentMethod === 'cash';
+        const cashReceived = getMoneyValue();
+        const cashChange = Math.max(0, cashReceived - grandTotal);
+        const cashValid = !isCashPayment || cashReceived >= grandTotal;
         const paymentDone = paymentReady && state.paymentConfirmed;
+        const stockExceeded = state.selectedProduct ? getQuantity() > state.selectedProduct.stock : false;
 
         receiptBody.classList.toggle('hidden', !paymentDone);
         paymentHint.classList.toggle('hidden', paymentReady);
@@ -455,9 +502,15 @@
             : paymentReady
                 ? 'mt-1 font-semibold text-amber-300'
                 : 'mt-1 font-semibold text-slate-200';
-        confirmPaymentButton.disabled = !paymentReady || state.saleFinalized;
+        confirmPaymentButton.disabled = !paymentReady || state.saleFinalized || !cashValid;
         confirmPaymentButton.textContent = state.paymentConfirmed ? 'Sudah Terkonfirmasi' : 'Konfirmasi Pembayaran';
         printReceiptButton.disabled = !paymentDone;
+        cashHandlingPanel.classList.toggle('hidden', !isCashPayment || state.saleFinalized);
+        cashReceivedInput.disabled = state.saleFinalized;
+        cashReceivedInput.value = state.cashReceivedInput;
+        cashChangeDisplay.textContent = formatMoney(cashChange);
+        receiptPaidAmount.textContent = formatMoney(paymentReady ? (isCashPayment ? cashReceived : grandTotal) : 0);
+        receiptChangeAmount.textContent = formatMoney(paymentReady ? (isCashPayment ? cashChange : 0) : 0);
 
         paymentButtons.forEach((button) => {
             button.disabled = state.saleFinalized;
@@ -568,12 +621,29 @@
 
             state.paymentMethod = button.dataset.paymentMethod || '';
             state.paymentConfirmed = false;
+            state.cashReceivedInput = state.paymentMethod === 'cash' ? String(getCartTotals().grandTotal || 0) : '';
             render();
         });
     });
 
+    cashReceivedInput.addEventListener('input', () => {
+        if (state.saleFinalized) {
+            return;
+        }
+
+        state.cashReceivedInput = moneyOnlyDigits(cashReceivedInput.value);
+        render();
+    });
+
     confirmPaymentButton.addEventListener('click', () => {
         if (!state.paymentMethod || !state.cart.length || state.saleFinalized) {
+            return;
+        }
+
+        const { grandTotal } = getCartTotals();
+        const paidAmount = state.paymentMethod === 'cash' ? getMoneyValue() : grandTotal;
+        if (state.paymentMethod === 'cash' && paidAmount < grandTotal) {
+            alert('Nominal cash kurang dari total belanja.');
             return;
         }
 
@@ -589,6 +659,7 @@
             body: JSON.stringify({
                 invoice_number: state.invoiceNumber,
                 payment_method: state.paymentMethod,
+                paid_amount: paidAmount,
                 cart: state.cart.map((item) => ({
                     product_id: item.id,
                     quantity: item.quantity,
@@ -694,6 +765,7 @@
         state.selectedProduct = null;
         state.quantityInput = '';
         state.paymentMethod = '';
+        state.cashReceivedInput = '';
         state.paymentConfirmed = false;
         render();
     });
@@ -711,6 +783,7 @@
 
         state.cart = state.cart.filter((item) => String(item.id) !== target.dataset.remove);
         state.paymentMethod = '';
+        state.cashReceivedInput = '';
         state.paymentConfirmed = false;
         render();
     });

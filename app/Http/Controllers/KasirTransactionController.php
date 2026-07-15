@@ -18,6 +18,7 @@ class KasirTransactionController extends Controller
         $validated = $request->validate([
             'invoice_number' => ['required', 'string', 'max:50', 'unique:transactions,invoice_number'],
             'payment_method' => ['required', 'string', 'max:50'],
+            'paid_amount' => ['nullable', 'numeric', 'min:0'],
             'cart' => ['required', 'array', 'min:1'],
             'cart.*.product_id' => ['required', 'integer', 'exists:products,id'],
             'cart.*.quantity' => ['required', 'integer', 'min:1'],
@@ -33,6 +34,8 @@ class KasirTransactionController extends Controller
                 'transaction_id' => $existingTransaction->id,
                 'invoice_number' => $existingTransaction->invoice_number,
                 'grand_total' => (float) $existingTransaction->grand_total,
+                'paid_amount' => (float) $existingTransaction->paid_amount,
+                'change_amount' => (float) $existingTransaction->change_amount,
                 'payment_method' => $existingTransaction->payment_method,
             ]);
         }
@@ -94,6 +97,20 @@ class KasirTransactionController extends Controller
             }
 
             $grandTotal = $totalAmount;
+            $paidAmount = $grandTotal;
+            $changeAmount = 0.0;
+
+            if ($paymentMethod->code === 'cash') {
+                $paidAmount = (float) ($validated['paid_amount'] ?? 0);
+
+                if ($paidAmount < $grandTotal) {
+                    throw ValidationException::withMessages([
+                        'paid_amount' => 'Nominal cash kurang dari total belanja.',
+                    ]);
+                }
+
+                $changeAmount = $paidAmount - $grandTotal;
+            }
 
             $transaction = Transaction::create([
                 'invoice_number' => $validated['invoice_number'],
@@ -102,8 +119,8 @@ class KasirTransactionController extends Controller
                 'total_amount' => $totalAmount,
                 'discount_amount' => 0,
                 'grand_total' => $grandTotal,
-                'paid_amount' => $grandTotal,
-                'change_amount' => 0,
+                'paid_amount' => $paidAmount,
+                'change_amount' => $changeAmount,
                 'payment_method' => $paymentMethod->label,
             ]);
 
@@ -121,6 +138,8 @@ class KasirTransactionController extends Controller
             'transaction_id' => $transaction->id,
             'invoice_number' => $transaction->invoice_number,
             'grand_total' => (float) $transaction->grand_total,
+            'paid_amount' => (float) $transaction->paid_amount,
+            'change_amount' => (float) $transaction->change_amount,
             'payment_method' => $transaction->payment_method,
         ]);
     }

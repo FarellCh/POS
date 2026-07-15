@@ -74,6 +74,8 @@
                                 <th class="px-4 py-3 font-medium">Kasir</th>
                                 <th class="px-4 py-3 font-medium">Metode</th>
                                 <th class="px-4 py-3 font-medium">Total</th>
+                                <th class="px-4 py-3 font-medium">Dibayar</th>
+                                <th class="px-4 py-3 font-medium">Kembalian</th>
                                 <th class="px-4 py-3 font-medium">Status</th>
                                 <th class="px-4 py-3 font-medium">Aksi</th>
                             </tr>
@@ -85,6 +87,8 @@
                                     <td class="px-4 py-3">{{ $transaction->user?->name ?? '-' }}</td>
                                     <td class="px-4 py-3 text-slate-300">{{ $transaction->payment_method }}</td>
                                     <td class="px-4 py-3">Rp {{ number_format((float) $transaction->grand_total, 0, ',', '.') }}</td>
+                                    <td class="px-4 py-3">Rp {{ number_format((float) $transaction->paid_amount, 0, ',', '.') }}</td>
+                                    <td class="px-4 py-3">Rp {{ number_format((float) $transaction->change_amount, 0, ',', '.') }}</td>
                                     <td class="px-4 py-3">
                                         @if ($transaction->is_voided)
                                             <span class="rounded-full border border-rose-400/30 bg-rose-400/10 px-3 py-1 text-xs font-semibold text-rose-200">Void</span>
@@ -117,7 +121,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="px-4 py-6 text-center text-slate-400">
+                                    <td colspan="8" class="px-4 py-6 text-center text-slate-400">
                                         Belum ada transaksi.
                                     </td>
                                 </tr>
