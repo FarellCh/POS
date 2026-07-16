@@ -59,6 +59,76 @@
     <section class="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
         <div class="space-y-6">
             <div class="rounded-3xl border border-white/10 bg-white/8 p-6 shadow-xl backdrop-blur-xl">
+                <div class="flex items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-xl font-semibold text-white">Laporan Penjualan</h2>
+                        <p class="text-sm text-slate-300">Ringkasan harian, bulanan, profit, dan produk terlaris.</p>
+                    </div>
+                </div>
+
+                <div class="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                    <div class="rounded-2xl border border-white/10 bg-slate-950/35 p-4">
+                        <p class="text-xs uppercase tracking-[0.25em] text-slate-400">Transaksi Harian</p>
+                        <p class="mt-2 text-3xl font-semibold text-white">{{ $reports['daily']['transactions'] }}</p>
+                        <p class="mt-2 text-sm text-slate-300">Omzet: Rp {{ number_format($reports['daily']['revenue'], 0, ',', '.') }}</p>
+                    </div>
+                    <div class="rounded-2xl border border-white/10 bg-slate-950/35 p-4">
+                        <p class="text-xs uppercase tracking-[0.25em] text-slate-400">Profit Harian</p>
+                        <p class="mt-2 text-3xl font-semibold text-emerald-300">Rp {{ number_format($reports['daily']['profit'], 0, ',', '.') }}</p>
+                        <p class="mt-2 text-sm text-slate-300">Berdasarkan transaksi non-void.</p>
+                    </div>
+                    <div class="rounded-2xl border border-white/10 bg-slate-950/35 p-4">
+                        <p class="text-xs uppercase tracking-[0.25em] text-slate-400">Transaksi Bulanan</p>
+                        <p class="mt-2 text-3xl font-semibold text-white">{{ $reports['monthly']['transactions'] }}</p>
+                        <p class="mt-2 text-sm text-slate-300">Omzet: Rp {{ number_format($reports['monthly']['revenue'], 0, ',', '.') }}</p>
+                    </div>
+                    <div class="rounded-2xl border border-white/10 bg-slate-950/35 p-4">
+                        <p class="text-xs uppercase tracking-[0.25em] text-slate-400">Profit Bulanan</p>
+                        <p class="mt-2 text-3xl font-semibold text-cyan-300">Rp {{ number_format($reports['monthly']['profit'], 0, ',', '.') }}</p>
+                        <p class="mt-2 text-sm text-slate-300">Akumulasi bulan berjalan.</p>
+                    </div>
+                </div>
+
+                <div class="mt-5 overflow-hidden rounded-2xl border border-white/10">
+                    <div class="border-b border-white/10 bg-slate-950/35 px-4 py-3">
+                        <h3 class="text-sm font-semibold uppercase tracking-[0.2em] text-slate-300">Best Seller</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-white/10 text-left text-sm">
+                            <thead class="bg-slate-950/40 text-slate-300">
+                                <tr>
+                                    <th class="px-4 py-3 font-medium">SKU</th>
+                                    <th class="px-4 py-3 font-medium">Produk</th>
+                                    <th class="px-4 py-3 font-medium">Kategori</th>
+                                    <th class="px-4 py-3 font-medium">Terjual</th>
+                                    <th class="px-4 py-3 font-medium">Omzet</th>
+                                    <th class="px-4 py-3 font-medium">Profit</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-white/10 bg-slate-950/20 text-slate-100">
+                                @forelse ($bestSellers as $item)
+                                    <tr>
+                                        <td class="px-4 py-3 text-slate-300">{{ $item->sku ?? '-' }}</td>
+                                        <td class="px-4 py-3 font-medium text-white">{{ $item->name ?? '-' }}</td>
+                                        <td class="px-4 py-3 text-slate-300">{{ $item->category_name ?? '-' }}</td>
+                                        <td class="px-4 py-3">{{ (int) $item->sold_quantity }}</td>
+                                        <td class="px-4 py-3">Rp {{ number_format((float) $item->revenue, 0, ',', '.') }}</td>
+                                        <td class="px-4 py-3">Rp {{ number_format((float) $item->profit, 0, ',', '.') }}</td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="6" class="px-4 py-6 text-center text-slate-400">
+                                            Belum ada data best seller.
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="rounded-3xl border border-white/10 bg-white/8 p-6 shadow-xl backdrop-blur-xl">
                 <div class="flex items-center justify-between">
                     <div>
                         <h2 class="text-xl font-semibold text-white">Transaksi Terbaru</h2>
