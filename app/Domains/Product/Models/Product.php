@@ -5,6 +5,7 @@ namespace App\Domains\Product\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Domains\Inventory\Models\StockMovement;
 
 class Product extends Model
 {
@@ -39,5 +40,10 @@ class Product extends Model
     public function stockHistories(): HasMany
     {
         return $this->hasMany(StockHistory::class, 'product_id');
+    }
+
+    public function stockMovements(): HasMany
+    {
+        return $this->hasMany(StockMovement::class, 'product_id');
     }
 }
