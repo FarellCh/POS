@@ -31,6 +31,7 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/transactions', [AdminTransactionController::class, 'index'])->name('transactions.index');
         Route::get('/cashier-sessions', [AdminCashierSessionController::class, 'index'])->name('cashier-sessions.index');
         Route::post('/cashier-users', [AdminCashierUserController::class, 'store'])->name('cashier-users.store');
         Route::get('/payment-methods', [AdminPaymentMethodController::class, 'index'])->name('payment-methods.index');
