@@ -3,6 +3,7 @@
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\AdminCashierSessionController;
 use App\Http\Controllers\AdminCashierUserController;
+use App\Http\Controllers\AdminInventoryController;
 use App\Http\Controllers\AdminPaymentMethodController;
 use App\Http\Controllers\AdminTransactionController;
 use App\Http\Controllers\AdminCategoryController;
@@ -32,6 +33,11 @@ Route::middleware('auth')->group(function () {
     Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
         Route::get('/transactions', [AdminTransactionController::class, 'index'])->name('transactions.index');
+        Route::get('/inventory', [AdminInventoryController::class, 'index'])->name('inventory.index');
+        Route::post('/inventory/suppliers', [AdminInventoryController::class, 'storeSupplier'])->name('inventory.suppliers.store');
+        Route::post('/inventory/purchases', [AdminInventoryController::class, 'storePurchase'])->name('inventory.purchases.store');
+        Route::post('/inventory/opname', [AdminInventoryController::class, 'storeOpname'])->name('inventory.opname.store');
+        Route::post('/inventory/damage', [AdminInventoryController::class, 'storeDamage'])->name('inventory.damage.store');
         Route::get('/cashier-sessions', [AdminCashierSessionController::class, 'index'])->name('cashier-sessions.index');
         Route::post('/cashier-users', [AdminCashierUserController::class, 'store'])->name('cashier-users.store');
         Route::get('/payment-methods', [AdminPaymentMethodController::class, 'index'])->name('payment-methods.index');
