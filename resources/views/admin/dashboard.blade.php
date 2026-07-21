@@ -237,6 +237,12 @@
                             >
                                 Edit
                             </a>
+                            <a
+                                href="{{ route('admin.inventory.products.history', $product) }}"
+                                class="absolute right-16 top-3 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-slate-200 transition hover:bg-white/10"
+                            >
+                                Riwayat
+                            </a>
                             <button
                                 type="button"
                                 class="product-pick text-left"

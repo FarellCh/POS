@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use Carbon\Carbon;
 
 class AdminInventoryController extends Controller
 {
@@ -86,6 +87,67 @@ class AdminInventoryController extends Controller
         $supplier->delete();
 
         return back()->with('success', 'Supplier berhasil dihapus.');
+    }
+
+    public function productHistory(Request $request, Product $product): View
+    {
+        $validated = $request->validate([
+            'date_from' => ['nullable', 'date'],
+            'date_to' => ['nullable', 'date', 'after_or_equal:date_from'],
+            'type' => ['nullable', Rule::in(['in', 'out', 'purchase', 'opname', 'damaged', 'lost'])],
+        ]);
+
+        $historyQuery = StockHistory::query()
+            ->with(['user', 'supplier'])
+            ->where('product_id', $product->id)
+            ->latest('created_at');
+
+        if (! empty($validated['date_from'])) {
+            $historyQuery->where('created_at', '>=', Carbon::parse($validated['date_from'])->startOfDay());
+        }
+
+        if (! empty($validated['date_to'])) {
+            $historyQuery->where('created_at', '<=', Carbon::parse($validated['date_to'])->endOfDay());
+        }
+
+        if (! empty($validated['type'])) {
+            $historyQuery->where('type', $validated['type']);
+        }
+
+        $history = $historyQuery
+            ->paginate(20)
+            ->withQueryString();
+
+        $summaryQuery = StockHistory::query()->where('product_id', $product->id);
+
+        if (! empty($validated['date_from'])) {
+            $summaryQuery->where('created_at', '>=', Carbon::parse($validated['date_from'])->startOfDay());
+        }
+
+        if (! empty($validated['date_to'])) {
+            $summaryQuery->where('created_at', '<=', Carbon::parse($validated['date_to'])->endOfDay());
+        }
+
+        if (! empty($validated['type'])) {
+            $summaryQuery->where('type', $validated['type']);
+        }
+
+        $summary = [
+            'total_masuk' => (int) (clone $summaryQuery)->whereIn('type', ['in', 'purchase', 'opname'])->sum('quantity'),
+            'total_keluar' => (int) (clone $summaryQuery)->whereIn('type', ['out', 'damaged', 'lost'])->sum('quantity'),
+            'total_catatan' => (clone $summaryQuery)->count(),
+        ];
+
+        return view('admin.inventory-history', [
+            'product' => $product->load('category'),
+            'history' => $history,
+            'summary' => $summary,
+            'filters' => [
+                'date_from' => $validated['date_from'] ?? null,
+                'date_to' => $validated['date_to'] ?? null,
+                'type' => $validated['type'] ?? null,
+            ],
+        ]);
     }
 
     public function storePurchase(Request $request): RedirectResponse

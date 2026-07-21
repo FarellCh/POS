@@ -15,6 +15,9 @@
             <a href="{{ route('admin.dashboard') }}" class="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/15">
                 Kembali ke Admin
             </a>
+            <a href="{{ route('admin.inventory.products.history', $product) }}" class="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/15">
+                Riwayat Stok
+            </a>
         </div>
     </section>
 
