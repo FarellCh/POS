@@ -26,6 +26,7 @@ class KasirOrderController extends Controller
                 return null;
             }
 
+            $beforeStock = $product->stock;
             $remainingStock = $product->stock - $validated['quantity'];
             $product->stock = $remainingStock;
             $product->save();
@@ -35,7 +36,10 @@ class KasirOrderController extends Controller
                 'user_id' => $request->user()?->id,
                 'type' => 'out',
                 'quantity' => $validated['quantity'],
+                'before_stock' => $beforeStock,
+                'after_stock' => $remainingStock,
                 'reference' => 'Kasir confirm',
+                'reference_number' => 'SALE-' . now()->format('YmdHis'),
             ]);
 
             return [

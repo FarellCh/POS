@@ -55,14 +55,19 @@ class AdminProductController extends Controller
             $stockAdjustment = (int) ($validated['stock_adjustment'] ?? 0);
 
             if ($stockAdjustment > 0) {
+                $beforeStock = $product->stock;
                 $product->increment('stock', $stockAdjustment);
+                $afterStock = $beforeStock + $stockAdjustment;
 
                 StockHistory::create([
                     'product_id' => $product->id,
                     'user_id' => $request->user()?->id,
                     'type' => 'in',
                     'quantity' => $stockAdjustment,
+                    'before_stock' => $beforeStock,
+                    'after_stock' => $afterStock,
                     'reference' => 'Admin stock adjustment',
+                    'reference_number' => 'ADJ-' . now()->format('YmdHis'),
                 ]);
             }
         });
@@ -98,13 +103,16 @@ class AdminProductController extends Controller
                     ->lockForUpdate()
                     ->findOrFail($validated['product_id']);
 
+                $beforeStock = $product->stock;
+                $afterStock = $beforeStock + $stockInput;
+
                 $product->update([
                     'category_id' => $validated['category_id'] ?? null,
                     'sku' => $validated['sku'],
                     'name' => $validated['name'],
                     'cost_price' => $validated['cost_price'],
                     'selling_price' => $validated['selling_price'],
-                    'stock' => $product->stock + $stockInput,
+                    'stock' => $afterStock,
                     'is_active' => $request->boolean('is_active', true),
                 ]);
 
@@ -114,7 +122,10 @@ class AdminProductController extends Controller
                         'user_id' => $request->user()?->id,
                         'type' => 'in',
                         'quantity' => $stockInput,
+                        'before_stock' => $beforeStock,
+                        'after_stock' => $afterStock,
                         'reference' => 'Admin stock addition',
+                        'reference_number' => 'ADD-' . now()->format('YmdHis'),
                     ]);
                 }
 
@@ -137,7 +148,10 @@ class AdminProductController extends Controller
                     'user_id' => $request->user()?->id,
                     'type' => 'in',
                     'quantity' => $stockInput,
+                    'before_stock' => 0,
+                    'after_stock' => $stockInput,
                     'reference' => 'Initial stock',
+                    'reference_number' => 'NEW-' . now()->format('YmdHis'),
                 ]);
             }
         });

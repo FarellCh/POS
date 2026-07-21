@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Domains\Inventory\Models\StockMovement;
 use App\Domains\Inventory\Models\Supplier;
 use App\Domains\Product\Models\Product;
+use App\Domains\Product\Models\StockHistory;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -24,17 +24,17 @@ class AdminInventoryController extends Controller
             'suppliers' => Supplier::query()
                 ->orderBy('name')
                 ->get(),
-            'movements' => StockMovement::query()
+            'movements' => StockHistory::query()
                 ->with(['product.category', 'supplier', 'user'])
                 ->latest('created_at')
                 ->limit(20)
                 ->get(),
             'statistics' => [
                 'supplier' => Supplier::count(),
-                'movement_total' => StockMovement::count(),
-                'movement_in' => StockMovement::where('type', 'purchase')->count(),
-                'movement_opname' => StockMovement::where('type', 'opname')->count(),
-                'movement_damage' => StockMovement::whereIn('type', ['damaged', 'lost'])->count(),
+                'movement_total' => StockHistory::count(),
+                'movement_in' => StockHistory::where('type', 'purchase')->count(),
+                'movement_opname' => StockHistory::where('type', 'opname')->count(),
+                'movement_damage' => StockHistory::whereIn('type', ['damaged', 'lost'])->count(),
             ],
         ]);
     }
@@ -42,19 +42,19 @@ class AdminInventoryController extends Controller
     public function storeSupplier(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:150', 'unique:suppliers,name'],
-            'phone' => ['nullable', 'string', 'max:30'],
-            'email' => ['nullable', 'email', 'max:150'],
-            'address' => ['nullable', 'string', 'max:1000'],
-            'is_active' => ['nullable', 'boolean'],
+            'supplier_name' => ['required', 'string', 'max:150', 'unique:suppliers,name'],
+            'supplier_phone' => ['nullable', 'string', 'max:30'],
+            'supplier_email' => ['nullable', 'email', 'max:150'],
+            'supplier_address' => ['nullable', 'string', 'max:1000'],
+            'supplier_is_active' => ['nullable', 'boolean'],
         ]);
 
         Supplier::create([
-            'name' => $validated['name'],
-            'phone' => $validated['phone'] ?? null,
-            'email' => $validated['email'] ?? null,
-            'address' => $validated['address'] ?? null,
-            'is_active' => $request->boolean('is_active', true),
+            'name' => $validated['supplier_name'],
+            'phone' => $validated['supplier_phone'] ?? null,
+            'email' => $validated['supplier_email'] ?? null,
+            'address' => $validated['supplier_address'] ?? null,
+            'is_active' => $request->boolean('supplier_is_active', true),
         ]);
 
         return back()->with('success', 'Supplier berhasil ditambahkan.');
@@ -63,37 +63,38 @@ class AdminInventoryController extends Controller
     public function storePurchase(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'product_id' => ['required', 'integer', 'exists:products,id'],
-            'supplier_id' => ['nullable', 'integer', 'exists:suppliers,id'],
-            'quantity' => ['required', 'integer', 'min:1'],
-            'unit_cost' => ['required', 'numeric', 'min:0'],
-            'reference_number' => ['nullable', 'string', 'max:100'],
-            'notes' => ['nullable', 'string', 'max:1000'],
+            'purchase_product_id' => ['required', 'integer', 'exists:products,id'],
+            'purchase_supplier_id' => ['nullable', 'integer', 'exists:suppliers,id'],
+            'purchase_quantity' => ['required', 'integer', 'min:1'],
+            'purchase_unit_cost' => ['required', 'numeric', 'min:0'],
+            'purchase_reference_number' => ['nullable', 'string', 'max:100'],
+            'purchase_notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
         DB::transaction(function () use ($validated, $request): void {
-            $product = Product::query()->lockForUpdate()->findOrFail($validated['product_id']);
+            $product = Product::query()->lockForUpdate()->findOrFail($validated['purchase_product_id']);
             $beforeStock = $product->stock;
-            $quantity = (int) $validated['quantity'];
+            $quantity = (int) $validated['purchase_quantity'];
             $afterStock = $beforeStock + $quantity;
+            $unitCost = (float) $validated['purchase_unit_cost'];
 
             $product->update([
                 'stock' => $afterStock,
-                'cost_price' => $validated['unit_cost'],
+                'cost_price' => $unitCost,
             ]);
 
-            StockMovement::create([
+            StockHistory::create([
                 'product_id' => $product->id,
-                'supplier_id' => $validated['supplier_id'] ?? null,
                 'user_id' => $request->user()?->id,
+                'supplier_id' => $validated['purchase_supplier_id'] ?? null,
                 'type' => 'purchase',
                 'quantity' => $quantity,
                 'before_stock' => $beforeStock,
                 'after_stock' => $afterStock,
-                'unit_cost' => $validated['unit_cost'],
-                'total_cost' => $quantity * (float) $validated['unit_cost'],
-                'reference_number' => $validated['reference_number'] ?? null,
-                'notes' => $validated['notes'] ?? null,
+                'unit_cost' => $unitCost,
+                'total_cost' => $quantity * $unitCost,
+                'reference_number' => $validated['purchase_reference_number'] ?? null,
+                'notes' => $validated['purchase_notes'] ?? null,
             ]);
         });
 
@@ -103,22 +104,22 @@ class AdminInventoryController extends Controller
     public function storeOpname(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'product_id' => ['required', 'integer', 'exists:products,id'],
-            'counted_stock' => ['required', 'integer', 'min:0'],
-            'notes' => ['nullable', 'string', 'max:1000'],
+            'opname_product_id' => ['required', 'integer', 'exists:products,id'],
+            'opname_counted_stock' => ['required', 'integer', 'min:0'],
+            'opname_notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
         DB::transaction(function () use ($validated, $request): void {
-            $product = Product::query()->lockForUpdate()->findOrFail($validated['product_id']);
+            $product = Product::query()->lockForUpdate()->findOrFail($validated['opname_product_id']);
             $beforeStock = $product->stock;
-            $afterStock = (int) $validated['counted_stock'];
+            $afterStock = (int) $validated['opname_counted_stock'];
             $adjustment = abs($afterStock - $beforeStock);
 
             $product->update([
                 'stock' => $afterStock,
             ]);
 
-            StockMovement::create([
+            StockHistory::create([
                 'product_id' => $product->id,
                 'user_id' => $request->user()?->id,
                 'type' => 'opname',
@@ -126,7 +127,7 @@ class AdminInventoryController extends Controller
                 'before_stock' => $beforeStock,
                 'after_stock' => $afterStock,
                 'reference_number' => 'OP-' . now()->format('YmdHis'),
-                'notes' => $validated['notes'] ?? null,
+                'notes' => $validated['opname_notes'] ?? null,
             ]);
         });
 
@@ -136,20 +137,20 @@ class AdminInventoryController extends Controller
     public function storeDamage(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'product_id' => ['required', 'integer', 'exists:products,id'],
-            'type' => ['required', Rule::in(['damaged', 'lost'])],
-            'quantity' => ['required', 'integer', 'min:1'],
-            'notes' => ['nullable', 'string', 'max:1000'],
+            'damage_product_id' => ['required', 'integer', 'exists:products,id'],
+            'damage_type' => ['required', Rule::in(['damaged', 'lost'])],
+            'damage_quantity' => ['required', 'integer', 'min:1'],
+            'damage_notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
         DB::transaction(function () use ($validated, $request): void {
-            $product = Product::query()->lockForUpdate()->findOrFail($validated['product_id']);
+            $product = Product::query()->lockForUpdate()->findOrFail($validated['damage_product_id']);
             $beforeStock = $product->stock;
-            $quantity = (int) $validated['quantity'];
+            $quantity = (int) $validated['damage_quantity'];
 
             if ($quantity > $beforeStock) {
                 throw ValidationException::withMessages([
-                    'quantity' => 'Jumlah rusak/hilang tidak boleh melebihi stok tersedia.',
+                    'damage_quantity' => 'Jumlah rusak/hilang tidak boleh melebihi stok tersedia.',
                 ]);
             }
 
@@ -158,15 +159,15 @@ class AdminInventoryController extends Controller
                 'stock' => $afterStock,
             ]);
 
-            StockMovement::create([
+            StockHistory::create([
                 'product_id' => $product->id,
                 'user_id' => $request->user()?->id,
-                'type' => $validated['type'],
+                'type' => $validated['damage_type'],
                 'quantity' => $quantity,
                 'before_stock' => $beforeStock,
                 'after_stock' => $afterStock,
-                'reference_number' => strtoupper($validated['type']) . '-' . now()->format('YmdHis'),
-                'notes' => $validated['notes'] ?? null,
+                'reference_number' => strtoupper($validated['damage_type']) . '-' . now()->format('YmdHis'),
+                'notes' => $validated['damage_notes'] ?? null,
             ]);
         });
 

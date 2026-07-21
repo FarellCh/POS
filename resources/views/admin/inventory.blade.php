@@ -66,27 +66,27 @@
 
                     <div>
                         <label class="mb-2 block text-sm font-medium text-slate-200" for="supplier_name">Nama Supplier</label>
-                        <input id="supplier_name" name="name" type="text" value="{{ old('name') }}" maxlength="150" required class="w-full rounded-2xl border border-white/10 bg-slate-950/45 px-4 py-3 text-white focus:border-cyan-400/50 focus:outline-none" placeholder="Contoh: PT Sumber Makmur">
+                        <input id="supplier_name" name="supplier_name" type="text" value="{{ old('supplier_name') }}" maxlength="150" required class="w-full rounded-2xl border border-white/10 bg-slate-950/45 px-4 py-3 text-white focus:border-cyan-400/50 focus:outline-none" placeholder="Contoh: PT Sumber Makmur">
                     </div>
 
                     <div class="grid gap-4 sm:grid-cols-2">
                         <div>
                             <label class="mb-2 block text-sm font-medium text-slate-200" for="supplier_phone">Telepon</label>
-                            <input id="supplier_phone" name="phone" type="text" value="{{ old('phone') }}" maxlength="30" class="w-full rounded-2xl border border-white/10 bg-slate-950/45 px-4 py-3 text-white focus:border-cyan-400/50 focus:outline-none" placeholder="0812...">
+                            <input id="supplier_phone" name="supplier_phone" type="text" value="{{ old('supplier_phone') }}" maxlength="30" class="w-full rounded-2xl border border-white/10 bg-slate-950/45 px-4 py-3 text-white focus:border-cyan-400/50 focus:outline-none" placeholder="0812...">
                         </div>
                         <div>
                             <label class="mb-2 block text-sm font-medium text-slate-200" for="supplier_email">Email</label>
-                            <input id="supplier_email" name="email" type="email" value="{{ old('email') }}" maxlength="150" class="w-full rounded-2xl border border-white/10 bg-slate-950/45 px-4 py-3 text-white focus:border-cyan-400/50 focus:outline-none" placeholder="supplier@email.com">
+                            <input id="supplier_email" name="supplier_email" type="email" value="{{ old('supplier_email') }}" maxlength="150" class="w-full rounded-2xl border border-white/10 bg-slate-950/45 px-4 py-3 text-white focus:border-cyan-400/50 focus:outline-none" placeholder="supplier@email.com">
                         </div>
                     </div>
 
                     <div>
                         <label class="mb-2 block text-sm font-medium text-slate-200" for="supplier_address">Alamat</label>
-                        <textarea id="supplier_address" name="address" rows="3" class="w-full rounded-2xl border border-white/10 bg-slate-950/45 px-4 py-3 text-white focus:border-cyan-400/50 focus:outline-none" placeholder="Alamat supplier">{{ old('address') }}</textarea>
+                        <textarea id="supplier_address" name="supplier_address" rows="3" class="w-full rounded-2xl border border-white/10 bg-slate-950/45 px-4 py-3 text-white focus:border-cyan-400/50 focus:outline-none" placeholder="Alamat supplier">{{ old('supplier_address') }}</textarea>
                     </div>
 
                     <label class="flex items-center gap-2 text-sm text-slate-300">
-                        <input type="checkbox" name="is_active" value="1" @checked(old('is_active', true)) class="rounded border-white/20 bg-slate-950/45 text-cyan-400 focus:ring-cyan-400/30">
+                        <input type="checkbox" name="supplier_is_active" value="1" @checked(old('supplier_is_active', true)) class="rounded border-white/20 bg-slate-950/45 text-cyan-400 focus:ring-cyan-400/30">
                         Supplier aktif
                     </label>
 
@@ -107,10 +107,10 @@
 
                     <div>
                         <label class="mb-2 block text-sm font-medium text-slate-200" for="purchase_product_id">Produk</label>
-                        <select id="purchase_product_id" name="product_id" required class="w-full rounded-2xl border border-white/10 bg-slate-950/45 px-4 py-3 text-white focus:border-cyan-400/50 focus:outline-none">
+                        <select id="purchase_product_id" name="purchase_product_id" required class="w-full rounded-2xl border border-white/10 bg-slate-950/45 px-4 py-3 text-white focus:border-cyan-400/50 focus:outline-none">
                             <option value="">Pilih produk</option>
                             @foreach ($products as $product)
-                                <option value="{{ $product->id }}" @selected(old('product_id') == $product->id)>
+                                <option value="{{ $product->id }}" @selected(old('purchase_product_id') == $product->id)>
                                     {{ $product->sku }} — {{ $product->name }} (stok {{ $product->stock }})
                                 </option>
                             @endforeach
@@ -120,10 +120,10 @@
                     <div class="grid gap-4 sm:grid-cols-2">
                         <div>
                             <label class="mb-2 block text-sm font-medium text-slate-200" for="purchase_supplier_id">Supplier</label>
-                            <select id="purchase_supplier_id" name="supplier_id" class="w-full rounded-2xl border border-white/10 bg-slate-950/45 px-4 py-3 text-white focus:border-cyan-400/50 focus:outline-none">
+                            <select id="purchase_supplier_id" name="purchase_supplier_id" class="w-full rounded-2xl border border-white/10 bg-slate-950/45 px-4 py-3 text-white focus:border-cyan-400/50 focus:outline-none">
                                 <option value="">Pilih supplier</option>
                                 @foreach ($suppliers as $supplier)
-                                    <option value="{{ $supplier->id }}" @selected(old('supplier_id') == $supplier->id)>
+                                    <option value="{{ $supplier->id }}" @selected(old('purchase_supplier_id') == $supplier->id)>
                                         {{ $supplier->name }}
                                     </option>
                                 @endforeach
@@ -131,24 +131,24 @@
                         </div>
                         <div>
                             <label class="mb-2 block text-sm font-medium text-slate-200" for="purchase_reference_number">No Referensi</label>
-                            <input id="purchase_reference_number" name="reference_number" type="text" value="{{ old('reference_number') }}" maxlength="100" class="w-full rounded-2xl border border-white/10 bg-slate-950/45 px-4 py-3 text-white focus:border-cyan-400/50 focus:outline-none" placeholder="INV/PO supplier">
+                            <input id="purchase_reference_number" name="purchase_reference_number" type="text" value="{{ old('purchase_reference_number') }}" maxlength="100" class="w-full rounded-2xl border border-white/10 bg-slate-950/45 px-4 py-3 text-white focus:border-cyan-400/50 focus:outline-none" placeholder="INV/PO supplier">
                         </div>
                     </div>
 
                     <div class="grid gap-4 sm:grid-cols-2">
                         <div>
                             <label class="mb-2 block text-sm font-medium text-slate-200" for="purchase_quantity">Qty Masuk</label>
-                            <input id="purchase_quantity" name="quantity" type="number" min="1" step="1" value="{{ old('quantity', 1) }}" required class="w-full rounded-2xl border border-white/10 bg-slate-950/45 px-4 py-3 text-white focus:border-cyan-400/50 focus:outline-none">
+                            <input id="purchase_quantity" name="purchase_quantity" type="number" min="1" step="1" value="{{ old('purchase_quantity', 1) }}" required class="w-full rounded-2xl border border-white/10 bg-slate-950/45 px-4 py-3 text-white focus:border-cyan-400/50 focus:outline-none">
                         </div>
                         <div>
                             <label class="mb-2 block text-sm font-medium text-slate-200" for="purchase_unit_cost">Harga Beli / Unit</label>
-                            <input id="purchase_unit_cost" name="unit_cost" type="number" min="0" step="0.01" value="{{ old('unit_cost') }}" required class="w-full rounded-2xl border border-white/10 bg-slate-950/45 px-4 py-3 text-white focus:border-cyan-400/50 focus:outline-none" placeholder="0">
+                            <input id="purchase_unit_cost" name="purchase_unit_cost" type="number" min="0" step="0.01" value="{{ old('purchase_unit_cost') }}" required class="w-full rounded-2xl border border-white/10 bg-slate-950/45 px-4 py-3 text-white focus:border-cyan-400/50 focus:outline-none" placeholder="0">
                         </div>
                     </div>
 
                     <div>
                         <label class="mb-2 block text-sm font-medium text-slate-200" for="purchase_notes">Catatan</label>
-                        <textarea id="purchase_notes" name="notes" rows="3" class="w-full rounded-2xl border border-white/10 bg-slate-950/45 px-4 py-3 text-white focus:border-cyan-400/50 focus:outline-none" placeholder="Catatan pembelian">{{ old('notes') }}</textarea>
+                        <textarea id="purchase_notes" name="purchase_notes" rows="3" class="w-full rounded-2xl border border-white/10 bg-slate-950/45 px-4 py-3 text-white focus:border-cyan-400/50 focus:outline-none" placeholder="Catatan pembelian">{{ old('purchase_notes') }}</textarea>
                     </div>
 
                     <button type="submit" class="w-full rounded-2xl bg-emerald-500 px-4 py-3 font-semibold text-slate-950 transition hover:bg-emerald-400">
@@ -170,10 +170,10 @@
 
                     <div>
                         <label class="mb-2 block text-sm font-medium text-slate-200" for="opname_product_id">Produk</label>
-                        <select id="opname_product_id" name="product_id" required class="w-full rounded-2xl border border-white/10 bg-slate-950/45 px-4 py-3 text-white focus:border-cyan-400/50 focus:outline-none">
+                        <select id="opname_product_id" name="opname_product_id" required class="w-full rounded-2xl border border-white/10 bg-slate-950/45 px-4 py-3 text-white focus:border-cyan-400/50 focus:outline-none">
                             <option value="">Pilih produk</option>
                             @foreach ($products as $product)
-                                <option value="{{ $product->id }}" @selected(old('product_id') == $product->id)>
+                                <option value="{{ $product->id }}" @selected(old('opname_product_id') == $product->id)>
                                     {{ $product->sku }} — {{ $product->name }} (stok {{ $product->stock }})
                                 </option>
                             @endforeach
@@ -182,12 +182,12 @@
 
                     <div>
                         <label class="mb-2 block text-sm font-medium text-slate-200" for="counted_stock">Stok Hasil Hitung</label>
-                        <input id="counted_stock" name="counted_stock" type="number" min="0" step="1" value="{{ old('counted_stock') }}" required class="w-full rounded-2xl border border-white/10 bg-slate-950/45 px-4 py-3 text-white focus:border-cyan-400/50 focus:outline-none" placeholder="0">
+                        <input id="counted_stock" name="opname_counted_stock" type="number" min="0" step="1" value="{{ old('opname_counted_stock') }}" required class="w-full rounded-2xl border border-white/10 bg-slate-950/45 px-4 py-3 text-white focus:border-cyan-400/50 focus:outline-none" placeholder="0">
                     </div>
 
                     <div>
                         <label class="mb-2 block text-sm font-medium text-slate-200" for="opname_notes">Catatan</label>
-                        <textarea id="opname_notes" name="notes" rows="3" class="w-full rounded-2xl border border-white/10 bg-slate-950/45 px-4 py-3 text-white focus:border-cyan-400/50 focus:outline-none" placeholder="Catatan opname">{{ old('notes') }}</textarea>
+                        <textarea id="opname_notes" name="opname_notes" rows="3" class="w-full rounded-2xl border border-white/10 bg-slate-950/45 px-4 py-3 text-white focus:border-cyan-400/50 focus:outline-none" placeholder="Catatan opname">{{ old('opname_notes') }}</textarea>
                     </div>
 
                     <button type="submit" class="w-full rounded-2xl bg-cyan-500 px-4 py-3 font-semibold text-slate-950 transition hover:bg-cyan-400">
@@ -208,10 +208,10 @@
                     <div class="grid gap-4 sm:grid-cols-2">
                         <div>
                             <label class="mb-2 block text-sm font-medium text-slate-200" for="damage_product_id">Produk</label>
-                            <select id="damage_product_id" name="product_id" required class="w-full rounded-2xl border border-white/10 bg-slate-950/45 px-4 py-3 text-white focus:border-cyan-400/50 focus:outline-none">
+                            <select id="damage_product_id" name="damage_product_id" required class="w-full rounded-2xl border border-white/10 bg-slate-950/45 px-4 py-3 text-white focus:border-cyan-400/50 focus:outline-none">
                                 <option value="">Pilih produk</option>
                                 @foreach ($products as $product)
-                                    <option value="{{ $product->id }}" @selected(old('product_id') == $product->id)>
+                                    <option value="{{ $product->id }}" @selected(old('damage_product_id') == $product->id)>
                                         {{ $product->sku }} — {{ $product->name }} (stok {{ $product->stock }})
                                     </option>
                                 @endforeach
@@ -219,21 +219,21 @@
                         </div>
                         <div>
                             <label class="mb-2 block text-sm font-medium text-slate-200" for="damage_type">Tipe</label>
-                            <select id="damage_type" name="type" required class="w-full rounded-2xl border border-white/10 bg-slate-950/45 px-4 py-3 text-white focus:border-cyan-400/50 focus:outline-none">
-                                <option value="damaged" @selected(old('type') === 'damaged')>Rusak</option>
-                                <option value="lost" @selected(old('type') === 'lost')>Hilang</option>
+                            <select id="damage_type" name="damage_type" required class="w-full rounded-2xl border border-white/10 bg-slate-950/45 px-4 py-3 text-white focus:border-cyan-400/50 focus:outline-none">
+                            <option value="damaged" @selected(old('damage_type') === 'damaged')>Rusak</option>
+                            <option value="lost" @selected(old('damage_type') === 'lost')>Hilang</option>
                             </select>
                         </div>
                     </div>
 
                     <div>
                         <label class="mb-2 block text-sm font-medium text-slate-200" for="damage_quantity">Qty</label>
-                        <input id="damage_quantity" name="quantity" type="number" min="1" step="1" value="{{ old('quantity', 1) }}" required class="w-full rounded-2xl border border-white/10 bg-slate-950/45 px-4 py-3 text-white focus:border-cyan-400/50 focus:outline-none" placeholder="1">
+                        <input id="damage_quantity" name="damage_quantity" type="number" min="1" step="1" value="{{ old('damage_quantity', 1) }}" required class="w-full rounded-2xl border border-white/10 bg-slate-950/45 px-4 py-3 text-white focus:border-cyan-400/50 focus:outline-none" placeholder="1">
                     </div>
 
                     <div>
                         <label class="mb-2 block text-sm font-medium text-slate-200" for="damage_notes">Catatan</label>
-                        <textarea id="damage_notes" name="notes" rows="3" class="w-full rounded-2xl border border-white/10 bg-slate-950/45 px-4 py-3 text-white focus:border-cyan-400/50 focus:outline-none" placeholder="Detail kerusakan / kehilangan">{{ old('notes') }}</textarea>
+                        <textarea id="damage_notes" name="damage_notes" rows="3" class="w-full rounded-2xl border border-white/10 bg-slate-950/45 px-4 py-3 text-white focus:border-cyan-400/50 focus:outline-none" placeholder="Detail kerusakan / kehilangan">{{ old('damage_notes') }}</textarea>
                     </div>
 
                     <button type="submit" class="w-full rounded-2xl bg-rose-500 px-4 py-3 font-semibold text-white transition hover:bg-rose-400">

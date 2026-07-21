@@ -143,6 +143,7 @@ class AdminTransactionController extends Controller
                 }
 
                 $restoredStock = $product->stock + (int) $detail->quantity;
+                $beforeStock = $product->stock;
                 $product->stock = $restoredStock;
                 $product->save();
 
@@ -151,7 +152,10 @@ class AdminTransactionController extends Controller
                     'user_id' => $request->user()?->id,
                     'type' => 'in',
                     'quantity' => (int) $detail->quantity,
+                    'before_stock' => $beforeStock,
+                    'after_stock' => $restoredStock,
                     'reference' => 'Void transaction #' . $lockedTransaction->invoice_number,
+                    'reference_number' => 'VOID-' . $lockedTransaction->invoice_number,
                 ]);
             }
 
