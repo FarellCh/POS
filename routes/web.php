@@ -35,6 +35,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/transactions', [AdminTransactionController::class, 'index'])->name('transactions.index');
         Route::get('/inventory', [AdminInventoryController::class, 'index'])->name('inventory.index');
         Route::post('/inventory/suppliers', [AdminInventoryController::class, 'storeSupplier'])->name('inventory.suppliers.store');
+        Route::patch('/inventory/suppliers/{supplier}', [AdminInventoryController::class, 'updateSupplier'])->name('inventory.suppliers.update');
+        Route::delete('/inventory/suppliers/{supplier}', [AdminInventoryController::class, 'destroySupplier'])->name('inventory.suppliers.destroy');
         Route::post('/inventory/purchases', [AdminInventoryController::class, 'storePurchase'])->name('inventory.purchases.store');
         Route::post('/inventory/opname', [AdminInventoryController::class, 'storeOpname'])->name('inventory.opname.store');
         Route::post('/inventory/damage', [AdminInventoryController::class, 'storeDamage'])->name('inventory.damage.store');

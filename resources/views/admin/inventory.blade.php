@@ -1,4 +1,4 @@
-@extends('layouts.pos')
+﻿@extends('layouts.pos')
 
 @section('title', 'Manajemen Stok | KyoraPOS')
 
@@ -111,7 +111,7 @@
                             <option value="">Pilih produk</option>
                             @foreach ($products as $product)
                                 <option value="{{ $product->id }}" @selected(old('purchase_product_id') == $product->id)>
-                                    {{ $product->sku }} — {{ $product->name }} (stok {{ $product->stock }})
+                                    {{ $product->sku }} - {{ $product->name }} (stok {{ $product->stock }})
                                 </option>
                             @endforeach
                         </select>
@@ -174,7 +174,7 @@
                             <option value="">Pilih produk</option>
                             @foreach ($products as $product)
                                 <option value="{{ $product->id }}" @selected(old('opname_product_id') == $product->id)>
-                                    {{ $product->sku }} — {{ $product->name }} (stok {{ $product->stock }})
+                                    {{ $product->sku }} - {{ $product->name }} (stok {{ $product->stock }})
                                 </option>
                             @endforeach
                         </select>
@@ -212,7 +212,7 @@
                                 <option value="">Pilih produk</option>
                                 @foreach ($products as $product)
                                     <option value="{{ $product->id }}" @selected(old('damage_product_id') == $product->id)>
-                                        {{ $product->sku }} — {{ $product->name }} (stok {{ $product->stock }})
+                                        {{ $product->sku }} - {{ $product->name }} (stok {{ $product->stock }})
                                     </option>
                                 @endforeach
                             </select>
@@ -317,8 +317,53 @@
                             {{ $supplier->is_active ? 'Aktif' : 'Nonaktif' }}
                         </span>
                     </div>
-                    <p class="mt-3 text-sm text-slate-300">{{ $supplier->email ?? '-' }}</p>
-                    <p class="mt-2 text-sm text-slate-400">{{ $supplier->address ?? '-' }}</p>
+
+                    <form method="POST" action="{{ route('admin.inventory.suppliers.update', $supplier) }}" class="mt-4 space-y-3">
+                        @csrf
+                        @method('PATCH')
+
+                        <div>
+                            <label class="mb-1 block text-xs font-medium text-slate-400" for="supplier_name_{{ $supplier->id }}">Nama</label>
+                            <input id="supplier_name_{{ $supplier->id }}" name="supplier_name" type="text" value="{{ $supplier->name }}" maxlength="150" required class="w-full rounded-2xl border border-white/10 bg-slate-950/45 px-3 py-2 text-sm text-white focus:border-cyan-400/50 focus:outline-none">
+                        </div>
+                        <div class="grid gap-3 sm:grid-cols-2">
+                            <div>
+                                <label class="mb-1 block text-xs font-medium text-slate-400" for="supplier_phone_{{ $supplier->id }}">Telepon</label>
+                                <input id="supplier_phone_{{ $supplier->id }}" name="supplier_phone" type="text" value="{{ $supplier->phone }}" maxlength="30" class="w-full rounded-2xl border border-white/10 bg-slate-950/45 px-3 py-2 text-sm text-white focus:border-cyan-400/50 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="mb-1 block text-xs font-medium text-slate-400" for="supplier_email_{{ $supplier->id }}">Email</label>
+                                <input id="supplier_email_{{ $supplier->id }}" name="supplier_email" type="email" value="{{ $supplier->email }}" maxlength="150" class="w-full rounded-2xl border border-white/10 bg-slate-950/45 px-3 py-2 text-sm text-white focus:border-cyan-400/50 focus:outline-none">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-xs font-medium text-slate-400" for="supplier_address_{{ $supplier->id }}">Alamat</label>
+                            <textarea id="supplier_address_{{ $supplier->id }}" name="supplier_address" rows="2" class="w-full rounded-2xl border border-white/10 bg-slate-950/45 px-3 py-2 text-sm text-white focus:border-cyan-400/50 focus:outline-none">{{ $supplier->address }}</textarea>
+                        </div>
+
+                        <label class="flex items-center gap-2 text-xs text-slate-300">
+                            <input type="checkbox" name="supplier_is_active" value="1" @checked($supplier->is_active) class="rounded border-white/20 bg-slate-950/45 text-cyan-400 focus:ring-cyan-400/30">
+                            Supplier aktif
+                        </label>
+
+                        <div class="flex gap-2">
+                            <button type="submit" class="flex-1 rounded-2xl bg-cyan-500 px-3 py-2 text-xs font-semibold text-slate-950 transition hover:bg-cyan-400">
+                                Simpan
+                            </button>
+                            <button
+                                type="submit"
+                                form="delete-supplier-{{ $supplier->id }}"
+                                class="rounded-2xl bg-rose-500 px-3 py-2 text-xs font-semibold text-white transition hover:bg-rose-400"
+                            >
+                                Hapus
+                            </button>
+                        </div>
+                    </form>
+
+                    <form id="delete-supplier-{{ $supplier->id }}" method="POST" action="{{ route('admin.inventory.suppliers.destroy', $supplier) }}">
+                        @csrf
+                        @method('DELETE')
+                    </form>
                 </div>
             @empty
                 <div class="rounded-2xl border border-dashed border-white/10 px-4 py-6 text-center text-sm text-slate-400">

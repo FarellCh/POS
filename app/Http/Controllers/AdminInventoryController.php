@@ -60,6 +60,34 @@ class AdminInventoryController extends Controller
         return back()->with('success', 'Supplier berhasil ditambahkan.');
     }
 
+    public function updateSupplier(Request $request, Supplier $supplier): RedirectResponse
+    {
+        $validated = $request->validate([
+            'supplier_name' => ['required', 'string', 'max:150', 'unique:suppliers,name,' . $supplier->id],
+            'supplier_phone' => ['nullable', 'string', 'max:30'],
+            'supplier_email' => ['nullable', 'email', 'max:150'],
+            'supplier_address' => ['nullable', 'string', 'max:1000'],
+            'supplier_is_active' => ['nullable', 'boolean'],
+        ]);
+
+        $supplier->update([
+            'name' => $validated['supplier_name'],
+            'phone' => $validated['supplier_phone'] ?? null,
+            'email' => $validated['supplier_email'] ?? null,
+            'address' => $validated['supplier_address'] ?? null,
+            'is_active' => $request->boolean('supplier_is_active', true),
+        ]);
+
+        return back()->with('success', 'Supplier berhasil diperbarui.');
+    }
+
+    public function destroySupplier(Supplier $supplier): RedirectResponse
+    {
+        $supplier->delete();
+
+        return back()->with('success', 'Supplier berhasil dihapus.');
+    }
+
     public function storePurchase(Request $request): RedirectResponse
     {
         $validated = $request->validate([
